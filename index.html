@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Ankle Hero — Therapeutic Ankle ROM Game</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+:root {
+  --primary: #6c5ce7;
+  --bg: #1a1a2e;
+}
+
+body {
+  background: var(--bg);
+  overflow: hidden;
+  touch-action: none;
+  font-family: 'Fredoka', 'Segoe UI', system-ui, sans-serif;
+  color: #fff;
+  height: 100dvh;
+  width: 100vw;
+}
+
+canvas { display: block; width: 100%; height: 100%; }
+
+/* ── Screens ── */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: opacity 0.4s;
+  overflow-y: auto;
+  padding: 20px;
+}
+.screen.hidden { opacity: 0; pointer-events: none; }
+
+/* ── Theme Selection ── */
+#theme-screen {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+}
+#theme-screen h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.15em;
+  text-align: center;
+}
+#theme-screen .tagline {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 1.2em;
+  text-align: center;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.theme-card {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s, background 0.2s;
+}
+.theme-card:active { transform: scale(0.96); }
+.theme-card:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); }
+.theme-card .icon { font-size: 2.5rem; margin-bottom: 0.3em; }
+.theme-card .name { font-size: 1rem; font-weight: 600; }
+.theme-card .desc { font-size: 0.7rem; color: #999; margin-top: 0.2em; }
+
+/* ── Setup Screen ── */
+#setup-screen {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+}
+#setup-screen h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.3em;
+}
+.setup-instructions {
+  max-width: 320px;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 1.5em;
+  color: #bbb;
+  font-size: 0.9rem;
+}
+.setup-instructions strong { color: #fff; }
+.setup-visual {
+  font-size: 4rem;
+  margin-bottom: 0.5em;
+  animation: gentleBob 2s ease-in-out infinite;
+}
+@keyframes gentleBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.foot-position {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 1.5em;
+}
+.foot-option {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 90px;
+}
+.foot-option.active {
+  border-color: #6c5ce7;
+  background: rgba(108,92,231,0.15);
+}
+.foot-option .foot-icon { font-size: 1.5rem; }
+.foot-option .foot-label { font-size: 0.75rem; color: #aaa; margin-top: 4px; }
+
+.btn {
+  border: none;
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.85em 2.5em;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  margin: 0.3em;
+}
+.btn:active { transform: scale(0.95); }
+.btn-primary { background: linear-gradient(135deg, #6c5ce7, #a29bfe); box-shadow: 0 4px 20px rgba(108,92,231,0.4); }
+.btn-secondary { background: rgba(255,255,255,0.1); font-size: 0.95rem; padding: 0.7em 1.8em; }
+
+/* ── Calibration ── */
+#calibrate-screen {
+  background: rgba(26,26,46,0.97);
+}
+#calibrate-screen h2 { font-size: 1.5rem; margin-bottom: 0.3em; }
+.calibrate-anim {
+  font-size: 5rem;
+  margin: 0.5em 0;
+}
+.calibrate-status {
+  font-size: 1rem;
+  color: #aaa;
+  margin-bottom: 1em;
+}
+.angle-readout {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #a29bfe;
+  margin-bottom: 0.5em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── HUD ── */
+#hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 5;
+  pointer-events: none;
+}
+#hud .score-block { text-align: left; }
+#hud .score { font-size: 1.6rem; font-weight: 700; }
+#hud .streak { font-size: 0.75rem; color: #aaa; }
+#hud .rom-block { text-align: center; }
+#hud .rom-label { font-size: 0.6rem; color: #777; text-transform: uppercase; letter-spacing: 1px; }
+#hud .rom-value { font-size: 1rem; font-weight: 600; }
+#hud .stats-block { text-align: right; }
+#hud .catches { font-size: 1rem; }
+#hud .timer { font-size: 0.8rem; color: #aaa; }
+
+/* ── Angle indicator (side bar) ── */
+#angle-bar {
+  position: absolute;
+  right: 6px;
+  top: 15%;
+  bottom: 15%;
+  width: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  z-index: 4;
+  pointer-events: none;
+}
+#angle-marker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #a29bfe;
+  border-radius: 50%;
+  left: -3px;
+  transition: top 0.1s;
+  box-shadow: 0 0 10px rgba(162,155,254,0.5);
+}
+#angle-labels {
+  position: absolute;
+  right: 20px;
+  top: 15%;
+  bottom: 15%;
+  width: 30px;
+  z-index: 4;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.angle-label {
+  font-size: 0.55rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Level banner ── */
+#level-banner {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  font-weight: 700;
+  opacity: 0;
+  z-index: 6;
+  pointer-events: none;
+  text-shadow: 0 0 30px rgba(108,92,231,0.6);
+}
+
+/* ── Results screen ── */
+#results-screen {
+  background: rgba(26,26,46,0.96);
+}
+#results-screen h2 { font-size: 1.8rem; margin-bottom: 0.5em; }
+.result-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-width: 300px;
+  margin-bottom: 1.5em;
+}
+.result-stat {
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.result-stat .val { font-size: 1.5rem; font-weight: 700; color: #a29bfe; }
+.result-stat .label { font-size: 0.7rem; color: #888; margin-top: 4px; }
+
+/* ── Sensitivity slider ── */
+.sensitivity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1em;
+}
+.sensitivity-row label { font-size: 0.8rem; color: #aaa; }
+.sensitivity-row input[type=range] {
+  -webkit-appearance: none;
+  width: 120px;
+  height: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  outline: none;
+}
+.sensitivity-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  background: #a29bfe;
+  border-radius: 50%;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="score-block">
+    <div class="score" id="hud-score">0</div>
+    <div class="streak" id="hud-streak"></div>
+  </div>
+  <div class="rom-block">
+    <div class="rom-label">Ankle Angle</div>
+    <div class="rom-value" id="hud-angle">0°</div>
+  </div>
+  <div class="stats-block">
+    <div class="catches" id="hud-catches">🎯 0/0</div>
+    <div class="timer" id="hud-timer">2:00</div>
+  </div>
+</div>
+
+<div id="angle-bar" class="hidden">
+  <div id="angle-marker"></div>
+</div>
+<div id="angle-labels" class="hidden">
+  <span class="angle-label">DF ↑</span>
+  <span class="angle-label">Neutral</span>
+  <span class="angle-label">PF ↓</span>
+</div>
+
+<div id="level-banner"></div>
+
+<!-- ═══ Theme Selection ═══ -->
+<div class="screen" id="theme-screen">
+  <h1>🦶 Ankle Hero</h1>
+  <p class="tagline">Pick a world. Move your foot. Be the hero.</p>
+  <div class="theme-grid" id="theme-grid"></div>
+</div>
+
+<!-- ═══ Setup Screen ═══ -->
+<div class="screen hidden" id="setup-screen">
+  <div class="setup-visual" id="setup-icon">🦁</div>
+  <h2 id="setup-title">Zoo Rescue</h2>
+  <div class="setup-instructions">
+    <strong>Strap your phone to the top of your foot</strong> (or hold it against your shin).<br><br>
+    You'll move the <strong>basket up</strong> by pulling your toes up <em>(dorsiflexion)</em> and <strong>down</strong> by pointing toes <em>(plantar flexion)</em>.<br><br>
+    Catch the falling items!
+  </div>
+  <div class="foot-position">
+    <div class="foot-option active" data-foot="top" onclick="setFootPos('top')">
+      <div class="foot-icon">🦶</div>
+      <div class="foot-label">Top of Foot</div>
+    </div>
+    <div class="foot-option" data-foot="shin" onclick="setFootPos('shin')">
+      <div class="foot-icon">🦵</div>
+      <div class="foot-label">Shin</div>
+    </div>
+  </div>
+  <div class="sensitivity-row">
+    <label>Sensitivity</label>
+    <input type="range" min="1" max="5" value="3" id="sensitivity-slider" oninput="updateSensitivity()">
+    <span id="sensitivity-val" style="font-size:0.8rem;color:#a29bfe;min-width:20px">3</span>
+  </div>
+  <button class="btn btn-primary" onclick="goCalibrate()">Next → Calibrate</button>
+  <button class="btn btn-secondary" onclick="goThemes()">← Back</button>
+</div>
+
+<!-- ═══ Calibration ═══ -->
+<div class="screen hidden" id="calibrate-screen">
+  <h2>Calibrate</h2>
+  <div class="calibrate-anim">🦶</div>
+  <p class="calibrate-status" id="cal-status">Hold your foot <strong>flat on the floor</strong> and tap the button.</p>
+  <div class="angle-readout" id="cal-angle">—</div>
+  <button class="btn btn-primary" id="cal-btn" onclick="calibrate()">Set Neutral</button>
+  <button class="btn btn-secondary" onclick="showScreen('setup-screen')">← Back</button>
+</div>
+
+<!-- ═══ Results ═══ -->
+<div class="screen hidden" id="results-screen">
+  <h2 id="results-title">🎉 Great Job!</h2>
+  <div class="result-stats">
+    <div class="result-stat">
+      <div class="val" id="res-score">0</div>
+      <div class="label">Score</div>
+    </div>
+    <div class="result-stat">
+      <div class="val" id="res-caught">0/0</div>
+      <div class="label">Caught</div>
+    </div>
+    <div class="result-stat">
+      <div class="val" id="res-rom">0°</div>
+      <div class="label">Max ROM</div>
+    </div>
+    <div class="result-stat">
+      <div class="val" id="res-streak">0</div>
+      <div class="label">Best Streak</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="startGame()">▶ Play Again</button>
+  <button class="btn btn-secondary" onclick="goThemes()">Change Theme</button>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  ANKLE HERO — Therapeutic ankle dorsiflexion/plantar
+//  flexion game for pediatric toe walkers
+// ════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W, H, dpr;
+
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ══════════════════════
+//  THEMES
+// ══════════════════════
+const THEMES = {
+  zoo: {
+    name: 'Zoo Rescue',
+    icon: '🦁',
+    desc: 'Catch baby animals!',
+    bg1: '#1a3a1a', bg2: '#0d2a0d',
+    accent: '#6bcb77',
+    basketEmoji: '🧺',
+    basketLabel: 'Rescue Basket',
+    items: [
+      { emoji: '🐵', pts: 10, name: 'Monkey' },
+      { emoji: '🐘', pts: 15, name: 'Elephant' },
+      { emoji: '🦒', pts: 10, name: 'Giraffe' },
+      { emoji: '🐧', pts: 15, name: 'Penguin' },
+      { emoji: '🐼', pts: 20, name: 'Panda' },
+      { emoji: '🦁', pts: 25, name: 'Lion Cub', rare: true }
+    ],
+    hazards: [{ emoji: '🪨', name: 'Rock' }],
+    bgElements: ['🌿', '🌴', '🌳'],
+    catchSound: 'pop',
+    music: 'cheerful',
+    groundColor: '#2d5a27',
+    skyColors: ['#87ceeb', '#5ba3d9', '#2d7a3a']
+  },
+  dino: {
+    name: 'Dino Eggs',
+    icon: '🦕',
+    desc: 'Save the dino eggs!',
+    bg1: '#2a1a0a', bg2: '#1a0f05',
+    accent: '#ff9f43',
+    basketEmoji: '🪹',
+    basketLabel: 'Nest',
+    items: [
+      { emoji: '🥚', pts: 10, name: 'Egg' },
+      { emoji: '🦴', pts: 8, name: 'Bone' },
+      { emoji: '🪺', pts: 20, name: 'Golden Egg' },
+      { emoji: '🦎', pts: 12, name: 'Baby Dino' },
+      { emoji: '🌋', pts: 5, name: 'Lava Rock' },
+      { emoji: '🦕', pts: 30, name: 'T-Rex Baby', rare: true }
+    ],
+    hazards: [{ emoji: '☄️', name: 'Meteor' }],
+    bgElements: ['🌿', '🪨', '🌋'],
+    groundColor: '#5a3a1a',
+    skyColors: ['#ff7675', '#d35400', '#2d1a0a']
+  },
+  ocean: {
+    name: 'Ocean Catch',
+    icon: '🌊',
+    desc: 'Catch sea friends!',
+    bg1: '#0a2a4a', bg2: '#051a2a',
+    accent: '#0abde3',
+    basketEmoji: '🪣',
+    basketLabel: 'Bucket',
+    items: [
+      { emoji: '🐟', pts: 10, name: 'Fish' },
+      { emoji: '🐠', pts: 12, name: 'Tropical Fish' },
+      { emoji: '🦀', pts: 15, name: 'Crab' },
+      { emoji: '🐙', pts: 15, name: 'Octopus' },
+      { emoji: '🐚', pts: 8, name: 'Shell' },
+      { emoji: '🐬', pts: 30, name: 'Dolphin', rare: true }
+    ],
+    hazards: [{ emoji: '🪼', name: 'Jellyfish' }],
+    bgElements: ['🫧', '🌊', '🐚'],
+    groundColor: '#1a4a6a',
+    skyColors: ['#74b9ff', '#0984e3', '#0a2a4a']
+  },
+  space: {
+    name: 'Star Catcher',
+    icon: '🚀',
+    desc: 'Catch stars & planets!',
+    bg1: '#0a0a2e', bg2: '#050515',
+    accent: '#ffd93d',
+    basketEmoji: '🛸',
+    basketLabel: 'Space Pod',
+    items: [
+      { emoji: '⭐', pts: 10, name: 'Star' },
+      { emoji: '🌟', pts: 15, name: 'Bright Star' },
+      { emoji: '🪐', pts: 20, name: 'Planet' },
+      { emoji: '🌙', pts: 12, name: 'Moon' },
+      { emoji: '💫', pts: 8, name: 'Shooting Star' },
+      { emoji: '👽', pts: 30, name: 'Alien Friend', rare: true }
+    ],
+    hazards: [{ emoji: '☄️', name: 'Asteroid' }],
+    bgElements: ['✨', '💫', '🌌'],
+    groundColor: '#1a1a3e',
+    skyColors: ['#2d1b69', '#0a0a2e', '#050515']
+  },
+  unicorn: {
+    name: 'Rainbow Quest',
+    icon: '🦄',
+    desc: 'Catch rainbow gems!',
+    bg1: '#2a1a3e', bg2: '#1a0f2e',
+    accent: '#fd79a8',
+    basketEmoji: '☁️',
+    basketLabel: 'Cloud Basket',
+    items: [
+      { emoji: '💎', pts: 10, name: 'Crystal' },
+      { emoji: '🌈', pts: 15, name: 'Rainbow' },
+      { emoji: '🦋', pts: 12, name: 'Butterfly' },
+      { emoji: '🌸', pts: 8, name: 'Flower' },
+      { emoji: '✨', pts: 10, name: 'Sparkle' },
+      { emoji: '🦄', pts: 30, name: 'Baby Unicorn', rare: true }
+    ],
+    hazards: [{ emoji: '🌩️', name: 'Storm Cloud' }],
+    bgElements: ['🌸', '✨', '🌙'],
+    groundColor: '#3a2a5a',
+    skyColors: ['#a29bfe', '#6c5ce7', '#2a1a3e']
+  },
+  hero: {
+    name: 'Super Rescue',
+    icon: '🦸',
+    desc: 'Save the citizens!',
+    bg1: '#1a1a3e', bg2: '#0a0a1e',
+    accent: '#e74c3c',
+    basketEmoji: '🛡️',
+    basketLabel: 'Shield',
+    items: [
+      { emoji: '👶', pts: 15, name: 'Baby' },
+      { emoji: '🐱', pts: 10, name: 'Kitten' },
+      { emoji: '👧', pts: 15, name: 'Kid' },
+      { emoji: '🐶', pts: 10, name: 'Puppy' },
+      { emoji: '💰', pts: 8, name: 'Treasure' },
+      { emoji: '🦸‍♀️', pts: 30, name: 'Hero Partner', rare: true }
+    ],
+    hazards: [{ emoji: '💣', name: 'Bomb' }],
+    bgElements: ['🏢', '🏗️', '🌆'],
+    groundColor: '#2a2a4a',
+    skyColors: ['#636e72', '#2d3436', '#1a1a3e']
+  }
+};
+
+// Build theme grid
+const grid = document.getElementById('theme-grid');
+Object.keys(THEMES).forEach(key => {
+  const t = THEMES[key];
+  const card = document.createElement('div');
+  card.className = 'theme-card';
+  card.onclick = () => selectTheme(key);
+  card.innerHTML = `
+    <div class="icon">${t.icon}</div>
+    <div class="name">${t.name}</div>
+    <div class="desc">${t.desc}</div>
+  `;
+  grid.appendChild(card);
+});
+
+// ══════════════════════
+//  GAME STATE
+// ══════════════════════
+let currentTheme = null;
+let theme = null;
+let footPosition = 'top'; // top | shin
+let sensitivity = 3;
+let calibrationBeta = 0;
+let calibrated = false;
+
+let gameRunning = false;
+let animFrame = null;
+let lastTime = 0;
+
+// Motion
+let rawBeta = 0;
+let rawGamma = 0;
+let ankleAngle = 0; // degrees, positive = DF, negative = PF
+let useMouse = false;
+let mouseY = 0;
+
+// Game objects
+let basket = { y: 0, targetY: 0, vy: 0 };
+let items = [];
+let particles = [];
+let bgParticles = [];
+let bgElements = [];
+
+// Score / stats
+let score = 0;
+let totalItems = 0;
+let caughtItems = 0;
+let missedItems = 0;
+let streak = 0;
+let bestStreak = 0;
+let maxDF = 0; // max dorsiflexion observed
+let maxPF = 0; // max plantar flexion observed
+let gameTime = 0;
+let gameDuration = 120; // 2 minutes
+let level = 1;
+let levelTimer = 0;
+let spawnTimer = 0;
+let screenShake = 0;
+
+// ── Screen management ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  if (id) document.getElementById(id).classList.remove('hidden');
+}
+
+function goThemes() {
+  gameRunning = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('angle-bar').classList.add('hidden');
+  document.getElementById('angle-labels').classList.add('hidden');
+  showScreen('theme-screen');
+}
+
+// ── Theme selection ──
+function selectTheme(key) {
+  currentTheme = key;
+  theme = THEMES[key];
+  document.getElementById('setup-icon').textContent = theme.icon;
+  document.getElementById('setup-title').textContent = theme.name;
+  showScreen('setup-screen');
+}
+
+// ── Setup ──
+function setFootPos(pos) {
+  footPosition = pos;
+  document.querySelectorAll('.foot-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.foot === pos);
+  });
+}
+
+function updateSensitivity() {
+  sensitivity = parseInt(document.getElementById('sensitivity-slider').value);
+  document.getElementById('sensitivity-val').textContent = sensitivity;
+}
+
+// ── Motion ──
+function requestMotionPermission() {
+  return new Promise(resolve => {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(state => {
+        resolve(state === 'granted');
+      }).catch(() => resolve(false));
+    } else if ('DeviceOrientationEvent' in window) {
+      resolve(true);
+    } else {
+      resolve(false);
+    }
+  });
+}
+
+let motionEnabled = false;
+function enableMotion() {
+  if (motionEnabled) return;
+  motionEnabled = true;
+  window.addEventListener('deviceorientation', e => {
+    rawBeta = e.beta || 0;   // front/back tilt (-180 to 180)
+    rawGamma = e.gamma || 0; // left/right tilt (-90 to 90)
+  });
+}
+
+// Mouse fallback
+const isDesktop = !('ontouchstart' in window) && !navigator.maxTouchPoints;
+if (isDesktop) useMouse = true;
+canvas.addEventListener('mousemove', e => {
+  if (!useMouse) return;
+  mouseY = (e.clientY - H / 2) / (H / 2); // -1 to 1
+});
+canvas.addEventListener('touchmove', e => {
+  if (!useMouse) return;
+  e.preventDefault();
+  mouseY = (e.touches[0].clientY - H / 2) / (H / 2);
+}, { passive: false });
+
+// ── Calibration ──
+let calInterval = null;
+async function goCalibrate() {
+  const granted = await requestMotionPermission();
+  if (granted) {
+    enableMotion();
+  } else {
+    useMouse = true;
+  }
+  showScreen('calibrate-screen');
+
+  // Show live angle
+  if (calInterval) clearInterval(calInterval);
+  calInterval = setInterval(() => {
+    const angle = useMouse ? 0 : rawBeta;
+    document.getElementById('cal-angle').textContent = angle.toFixed(1) + '°';
+  }, 100);
+}
+
+function calibrate() {
+  calibrationBeta = rawBeta;
+  calibrated = true;
+  document.getElementById('cal-status').innerHTML = '✅ Neutral set at <strong>' + rawBeta.toFixed(1) + '°</strong>. Ready to play!';
+  document.getElementById('cal-btn').textContent = '▶ START GAME';
+  document.getElementById('cal-btn').onclick = () => {
+    if (calInterval) clearInterval(calInterval);
+    startGame();
+  };
+}
+
+// ── Angle computation ──
+function computeAnkleAngle() {
+  if (useMouse) {
+    return -mouseY * 30; // -30 to +30
+  }
+  let delta = rawBeta - calibrationBeta;
+
+  // Foot on top: dorsiflexion (foot up) decreases beta
+  // Shin: dorsiflexion increases beta
+  if (footPosition === 'top') {
+    delta = -delta;
+  }
+
+  // Apply sensitivity multiplier
+  const sensMultiplier = 0.5 + (sensitivity - 1) * 0.35;
+  delta *= sensMultiplier;
+
+  // Clamp to reasonable ROM (-40 to +40)
+  return Math.max(-40, Math.min(40, delta));
+}
+
+// ── Item spawning ──
+function spawnItem() {
+  const t = theme;
+  // Pick item based on weights
+  let itemDef;
+  if (Math.random() < 0.1 + level * 0.01) {
+    // Hazard
+    itemDef = { ...t.hazards[0], pts: -10, isHazard: true };
+  } else {
+    const pool = t.items.filter(i => !i.rare || Math.random() < 0.08);
+    itemDef = pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  const item = {
+    x: 30 + Math.random() * (W - 60),
+    y: -40,
+    emoji: itemDef.emoji,
+    pts: itemDef.pts || 10,
+    name: itemDef.name,
+    isHazard: itemDef.isHazard || false,
+    rare: itemDef.rare || false,
+    speed: 80 + level * 15 + Math.random() * 40,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleAmt: 15 + Math.random() * 20,
+    rotation: 0,
+    rotSpeed: (Math.random() - 0.5) * 3,
+    size: itemDef.rare ? 36 : (itemDef.isHazard ? 28 : 30),
+    caught: false,
+    missed: false
+  };
+  items.push(item);
+  totalItems++;
+}
+
+// ── Particles ──
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 180,
+      vy: (Math.random() - 0.5) * 180 - 60,
+      life: 0.5 + Math.random() * 0.4,
+      maxLife: 0.9,
+      r: 2 + Math.random() * 4,
+      color
+    });
+  }
+}
+
+function spawnCatchEffect(x, y, emoji) {
+  // Big emoji pop
+  particles.push({
+    x, y,
+    vx: 0, vy: -40,
+    life: 0.8, maxLife: 0.8,
+    r: 20, color: 'emoji',
+    emoji, scale: 1
+  });
+  spawnParticles(x, y, theme.accent, 12);
+}
+
+// ── Level Banner ──
+function showBanner(text) {
+  const banner = document.getElementById('level-banner');
+  banner.textContent = text;
+  banner.style.color = theme.accent;
+  banner.style.opacity = 1;
+  banner.style.transform = 'translate(-50%, -50%) scale(1.1)';
+  banner.style.transition = 'opacity 0.7s, transform 0.7s';
+  setTimeout(() => {
+    banner.style.opacity = 0;
+    banner.style.transform = 'translate(-50%, -50%) scale(0.8)';
+  }, 1200);
+}
+
+// ── Init BG elements ──
+function initBG() {
+  bgParticles = [];
+  bgElements = [];
+  for (let i = 0; i < 25; i++) {
+    bgParticles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 1 + Math.random() * 2,
+      speed: 10 + Math.random() * 30,
+      opacity: 0.1 + Math.random() * 0.3
+    });
+  }
+}
+
+// ══════════════════════
+//  START GAME
+// ══════════════════════
+function startGame() {
+  showScreen(null);
+  document.getElementById('hud').classList.remove('hidden');
+  document.getElementById('angle-bar').classList.remove('hidden');
+  document.getElementById('angle-labels').classList.remove('hidden');
+
+  score = 0;
+  totalItems = 0;
+  caughtItems = 0;
+  missedItems = 0;
+  streak = 0;
+  bestStreak = 0;
+  maxDF = 0;
+  maxPF = 0;
+  gameTime = 0;
+  level = 1;
+  levelTimer = 0;
+  spawnTimer = 0;
+  screenShake = 0;
+  items = [];
+  particles = [];
+
+  basket.y = H * 0.5;
+  basket.targetY = H * 0.5;
+
+  initBG();
+  updateHUD();
+  showBanner(theme.icon + ' Level 1');
+
+  gameRunning = true;
+  lastTime = performance.now();
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+// ── HUD ──
+function updateHUD() {
+  document.getElementById('hud-score').textContent = score;
+  document.getElementById('hud-streak').textContent = streak > 1 ? '🔥 ' + streak + ' streak!' : '';
+  document.getElementById('hud-angle').textContent = ankleAngle.toFixed(0) + '°';
+  document.getElementById('hud-angle').style.color = ankleAngle > 0 ? '#6bcb77' : ankleAngle < -5 ? '#ff6b6b' : '#aaa';
+  document.getElementById('hud-catches').textContent = '🎯 ' + caughtItems + '/' + totalItems;
+  const remaining = Math.max(0, gameDuration - gameTime);
+  const min = Math.floor(remaining / 60);
+  const sec = Math.floor(remaining % 60);
+  document.getElementById('hud-timer').textContent = min + ':' + String(sec).padStart(2, '0');
+}
+
+// ── Update ──
+function update(dt) {
+  if (!gameRunning) return;
+
+  gameTime += dt;
+  if (gameTime >= gameDuration) {
+    endGame();
+    return;
+  }
+
+  // Compute ankle angle
+  ankleAngle = computeAnkleAngle();
+
+  // Track ROM
+  if (ankleAngle > maxDF) maxDF = ankleAngle;
+  if (ankleAngle < maxPF) maxPF = ankleAngle;
+
+  // Map angle to basket Y position
+  // DF (+) = up, PF (-) = down
+  const neutralY = H * 0.5;
+  const rangeY = H * 0.38;
+  const targetY = neutralY - (ankleAngle / 35) * rangeY;
+  basket.targetY = Math.max(H * 0.08, Math.min(H * 0.88, targetY));
+  basket.y += (basket.targetY - basket.y) * 8 * dt;
+
+  // Update angle bar marker
+  const barTop = H * 0.15;
+  const barH = H * 0.7;
+  const markerPct = 0.5 - (ankleAngle / 70);
+  document.getElementById('angle-marker').style.top =
+    Math.max(0, Math.min(barH - 14, markerPct * barH)) + 'px';
+
+  // Spawn items
+  const spawnRate = Math.max(0.6, 2.0 - level * 0.15);
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    spawnItem();
+    spawnTimer = spawnRate + Math.random() * 0.5;
+  }
+
+  // Update items
+  const basketLeft = W / 2 - 40;
+  const basketRight = W / 2 + 40;
+  const basketTop = basket.y - 25;
+  const basketBot = basket.y + 15;
+
+  items.forEach(item => {
+    if (item.caught || item.missed) return;
+
+    item.y += item.speed * dt;
+    item.x += Math.sin(item.wobble) * item.wobbleAmt * dt;
+    item.wobble += dt * 2.5;
+    item.rotation += item.rotSpeed * dt;
+
+    // Check catch
+    if (item.y > basketTop - 10 && item.y < basketBot + 10 &&
+        item.x > basketLeft - 5 && item.x < basketRight + 5) {
+      item.caught = true;
+
+      if (item.isHazard) {
+        // Hit hazard — lose points, break streak
+        score = Math.max(0, score + item.pts);
+        streak = 0;
+        screenShake = 8;
+        spawnParticles(item.x, item.y, '#ff6b6b', 15);
+      } else {
+        // Caught!
+        caughtItems++;
+        streak++;
+        if (streak > bestStreak) bestStreak = streak;
+        const multiplier = Math.min(streak, 5);
+        const pts = item.pts * multiplier;
+        score += pts;
+        spawnCatchEffect(item.x, item.y, item.emoji);
+      }
+    }
+
+    // Missed (fell off bottom)
+    if (item.y > H + 50 && !item.caught) {
+      item.missed = true;
+      if (!item.isHazard) {
+        missedItems++;
+        streak = 0;
+      }
+    }
+  });
+
+  // Prune
+  items = items.filter(i => !(i.caught || i.missed) || (i.caught && i.y < H + 100));
+
+  // Particles
+  particles.forEach(p => {
+    if (p.color === 'emoji') {
+      p.y += p.vy * dt;
+      p.vy += 20 * dt;
+      p.life -= dt;
+      p.scale = p.life / p.maxLife;
+    } else {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 120 * dt;
+      p.life -= dt;
+    }
+  });
+  particles = particles.filter(p => p.life > 0);
+
+  // BG particles
+  bgParticles.forEach(p => {
+    p.y += p.speed * dt;
+    if (p.y > H + 10) { p.y = -10; p.x = Math.random() * W; }
+  });
+
+  // Level up
+  levelTimer += dt;
+  if (levelTimer > 25) {
+    levelTimer = 0;
+    level++;
+    showBanner(theme.icon + ' Level ' + level);
+  }
+
+  // Screen shake decay
+  if (screenShake > 0) screenShake *= 0.88;
+  if (screenShake < 0.3) screenShake = 0;
+
+  updateHUD();
+}
+
+// ── Draw ──
+function draw() {
+  ctx.save();
+
+  if (screenShake > 0) {
+    ctx.translate(
+      (Math.random() - 0.5) * screenShake * 2,
+      (Math.random() - 0.5) * screenShake * 2
+    );
+  }
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  if (theme) {
+    const sky = theme.skyColors || ['#1a1a2e', '#16213e', '#0f3460'];
+    sky.forEach((c, i) => grad.addColorStop(i / (sky.length - 1), c));
+  } else {
+    grad.addColorStop(0, '#1a1a2e');
+    grad.addColorStop(1, '#16213e');
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(-20, -20, W + 40, H + 40);
+
+  // BG particles (snow, bubbles, stars depending on theme)
+  bgParticles.forEach(p => {
+    ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // ── Zone indicators (DF up, PF down) ──
+  // Top zone (DF targets)
+  ctx.fillStyle = 'rgba(107, 203, 119, 0.03)';
+  ctx.fillRect(0, 0, W, H * 0.35);
+  // Bottom zone (PF targets)
+  ctx.fillStyle = 'rgba(255, 107, 107, 0.03)';
+  ctx.fillRect(0, H * 0.65, W, H * 0.35);
+
+  // Neutral line
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.setLineDash([8, 8]);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, H * 0.5);
+  ctx.lineTo(W, H * 0.5);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Falling items ──
+  items.forEach(item => {
+    if (item.caught || item.missed) return;
+    ctx.save();
+    ctx.translate(item.x, item.y);
+    ctx.rotate(item.rotation);
+
+    // Glow
+    if (item.rare) {
+      ctx.shadowColor = theme.accent;
+      ctx.shadowBlur = 20;
+    } else if (item.isHazard) {
+      ctx.shadowColor = '#ff4444';
+      ctx.shadowBlur = 12;
+    }
+
+    ctx.font = item.size + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.emoji, 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  });
+
+  // ── Basket ──
+  const bx = W / 2;
+  const by = basket.y;
+
+  // Basket glow
+  ctx.shadowColor = theme ? theme.accent : '#a29bfe';
+  ctx.shadowBlur = 25;
+
+  // Basket body
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.beginPath();
+  ctx.roundRect(bx - 38, by - 20, 76, 40, 12);
+  ctx.fill();
+  ctx.strokeStyle = theme ? theme.accent : '#a29bfe';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(bx - 38, by - 20, 76, 40, 12);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Basket emoji
+  ctx.font = '28px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(theme ? theme.basketEmoji : '🧺', bx, by);
+
+  // ── Catch zone indicator lines ──
+  ctx.strokeStyle = `rgba(255,255,255,0.1)`;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 6]);
+  ctx.beginPath();
+  ctx.moveTo(bx - 45, by);
+  ctx.lineTo(20, by);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bx + 45, by);
+  ctx.lineTo(W - 30, by);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Particles ──
+  particles.forEach(p => {
+    if (p.color === 'emoji') {
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.font = (30 * p.scale) + 'px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.emoji, p.x, p.y);
+    } else {
+      const alpha = p.life / p.maxLife;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * alpha, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  ctx.globalAlpha = 1;
+
+  // ── Direction labels on sides ──
+  ctx.fillStyle = 'rgba(107, 203, 119, 0.25)';
+  ctx.font = '600 0.65rem Fredoka, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('↑ TOES UP', 8, H * 0.12);
+  ctx.fillStyle = 'rgba(255, 159, 67, 0.25)';
+  ctx.fillText('↓ TOES DOWN', 8, H * 0.9);
+
+  ctx.restore();
+}
+
+// ── Game Loop ──
+function gameLoop(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.05);
+  lastTime = ts;
+  update(dt);
+  draw();
+  if (gameRunning) animFrame = requestAnimationFrame(gameLoop);
+}
+
+// ── End Game ──
+function endGame() {
+  gameRunning = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('angle-bar').classList.add('hidden');
+  document.getElementById('angle-labels').classList.add('hidden');
+
+  // Results
+  const maxROM = maxDF + Math.abs(maxPF);
+  const pct = totalItems > 0 ? Math.round((caughtItems / totalItems) * 100) : 0;
+
+  let title = '🎉 Great Job!';
+  if (pct >= 90) title = '🏆 AMAZING!';
+  else if (pct >= 70) title = '⭐ Awesome!';
+  else if (pct >= 50) title = '👍 Nice Try!';
+  else title = '💪 Keep Practicing!';
+
+  document.getElementById('results-title').textContent = title;
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-caught').textContent = caughtItems + '/' + totalItems + ' (' + pct + '%)';
+  document.getElementById('res-rom').textContent = maxROM.toFixed(0) + '°';
+  document.getElementById('res-streak').textContent = bestStreak;
+
+  showScreen('results-screen');
+}
+
+// ── Prevent zoom/scroll ──
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('touchmove', e => {
+  if (gameRunning) e.preventDefault();
+}, { passive: false });
+
+// Polyfill roundRect
+if (!ctx.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    r = Math.min(r, w/2, h/2);
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
+  };
+}
+</script>
+</body>
+</html>
