@@ -5,296 +5,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Ankle Hero — Therapeutic Ankle ROM Game</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
+*{margin:0;padding:0;box-sizing:border-box}
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
-
-:root {
-  --primary: #6c5ce7;
-  --bg: #1a1a2e;
-}
-
-body {
-  background: var(--bg);
-  overflow: hidden;
-  touch-action: none;
-  font-family: 'Fredoka', 'Segoe UI', system-ui, sans-serif;
-  color: #fff;
-  height: 100dvh;
-  width: 100vw;
-}
-
-canvas { display: block; width: 100%; height: 100%; }
-
-/* ── Screens ── */
-.screen {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  transition: opacity 0.4s;
-  overflow-y: auto;
-  padding: 20px;
-}
-.screen.hidden { opacity: 0; pointer-events: none; }
-
-/* ── Theme Selection ── */
-#theme-screen {
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-}
-#theme-screen h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.15em;
-  text-align: center;
-}
-#theme-screen .tagline {
-  font-size: 0.85rem;
-  color: #888;
-  margin-bottom: 1.2em;
-  text-align: center;
-}
-
-.theme-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.theme-card {
-  background: rgba(255,255,255,0.06);
-  border: 2px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 16px 10px;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.15s, border-color 0.2s, background 0.2s;
-}
-.theme-card:active { transform: scale(0.96); }
-.theme-card:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); }
-.theme-card .icon { font-size: 2.5rem; margin-bottom: 0.3em; }
-.theme-card .name { font-size: 1rem; font-weight: 600; }
-.theme-card .desc { font-size: 0.7rem; color: #999; margin-top: 0.2em; }
-
-/* ── Setup Screen ── */
-#setup-screen {
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-}
-#setup-screen h2 {
-  font-size: 1.6rem;
-  margin-bottom: 0.3em;
-}
-.setup-instructions {
-  max-width: 320px;
-  text-align: center;
-  line-height: 1.6;
-  margin-bottom: 1.5em;
-  color: #bbb;
-  font-size: 0.9rem;
-}
-.setup-instructions strong { color: #fff; }
-.setup-visual {
-  font-size: 4rem;
-  margin-bottom: 0.5em;
-  animation: gentleBob 2s ease-in-out infinite;
-}
-@keyframes gentleBob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-.foot-position {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 1.5em;
-}
-.foot-option {
-  background: rgba(255,255,255,0.06);
-  border: 2px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  padding: 12px 16px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 90px;
-}
-.foot-option.active {
-  border-color: #6c5ce7;
-  background: rgba(108,92,231,0.15);
-}
-.foot-option .foot-icon { font-size: 1.5rem; }
-.foot-option .foot-label { font-size: 0.75rem; color: #aaa; margin-top: 4px; }
-
-.btn {
-  border: none;
-  color: #fff;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding: 0.85em 2.5em;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  margin: 0.3em;
-}
-.btn:active { transform: scale(0.95); }
-.btn-primary { background: linear-gradient(135deg, #6c5ce7, #a29bfe); box-shadow: 0 4px 20px rgba(108,92,231,0.4); }
-.btn-secondary { background: rgba(255,255,255,0.1); font-size: 0.95rem; padding: 0.7em 1.8em; }
-
-/* ── Calibration ── */
-#calibrate-screen {
-  background: rgba(26,26,46,0.97);
-}
-#calibrate-screen h2 { font-size: 1.5rem; margin-bottom: 0.3em; }
-.calibrate-anim {
-  font-size: 5rem;
-  margin: 0.5em 0;
-}
-.calibrate-status {
-  font-size: 1rem;
-  color: #aaa;
-  margin-bottom: 1em;
-}
-.angle-readout {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #a29bfe;
-  margin-bottom: 0.5em;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── HUD ── */
-#hud {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  padding: 10px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  z-index: 5;
-  pointer-events: none;
-}
-#hud .score-block { text-align: left; }
-#hud .score { font-size: 1.6rem; font-weight: 700; }
-#hud .streak { font-size: 0.75rem; color: #aaa; }
-#hud .rom-block { text-align: center; }
-#hud .rom-label { font-size: 0.6rem; color: #777; text-transform: uppercase; letter-spacing: 1px; }
-#hud .rom-value { font-size: 1rem; font-weight: 600; }
-#hud .stats-block { text-align: right; }
-#hud .catches { font-size: 1rem; }
-#hud .timer { font-size: 0.8rem; color: #aaa; }
-#hud .hearts { font-size: 1.2rem; margin-top: 2px; }
-
-/* ── Angle indicator (side bar) ── */
-#angle-bar {
-  position: absolute;
-  right: 6px;
-  top: 15%;
-  bottom: 15%;
-  width: 8px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 4px;
-  z-index: 4;
-  pointer-events: none;
-}
-#angle-marker {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  background: #a29bfe;
-  border-radius: 50%;
-  left: -3px;
-  transition: top 0.1s;
-  box-shadow: 0 0 10px rgba(162,155,254,0.5);
-}
-#angle-labels {
-  position: absolute;
-  right: 20px;
-  top: 15%;
-  bottom: 15%;
-  width: 30px;
-  z-index: 4;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-end;
-}
-.angle-label {
-  font-size: 0.55rem;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* ── Level banner ── */
-#level-banner {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 2rem;
-  font-weight: 700;
-  opacity: 0;
-  z-index: 6;
-  pointer-events: none;
-  text-shadow: 0 0 30px rgba(108,92,231,0.6);
-}
-
-/* ── Results screen ── */
-#results-screen {
-  background: rgba(26,26,46,0.96);
-}
-#results-screen h2 { font-size: 1.8rem; margin-bottom: 0.5em; }
-.result-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  max-width: 300px;
-  margin-bottom: 1.5em;
-}
-.result-stat {
-  background: rgba(255,255,255,0.06);
-  border-radius: 12px;
-  padding: 12px;
-  text-align: center;
-}
-.result-stat .val { font-size: 1.5rem; font-weight: 700; color: #a29bfe; }
-.result-stat .label { font-size: 0.7rem; color: #888; margin-top: 4px; }
-
-/* ── Sensitivity slider ── */
-.sensitivity-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 1em;
-}
-.sensitivity-row label { font-size: 0.8rem; color: #aaa; }
-.sensitivity-row input[type=range] {
-  -webkit-appearance: none;
-  width: 120px;
-  height: 6px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 3px;
-  outline: none;
-}
-.sensitivity-row input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px; height: 18px;
-  background: #a29bfe;
-  border-radius: 50%;
-  cursor: pointer;
-}
+:root{--primary:#6c5ce7;--bg:#1a1a2e}
+body{background:var(--bg);overflow:hidden;touch-action:none;font-family:'Fredoka','Segoe UI',system-ui,sans-serif;color:#fff;height:100dvh;width:100vw}
+canvas{display:block;width:100%;height:100%}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;transition:opacity .4s;overflow-y:auto;padding:20px}
+.screen.hidden{opacity:0;pointer-events:none}
+#theme-screen{background:linear-gradient(180deg,#1a1a2e,#16213e)}
+#theme-screen h1{font-size:2rem;font-weight:700;margin-bottom:.15em;text-align:center}
+#theme-screen .tagline{font-size:.85rem;color:#888;margin-bottom:1.2em;text-align:center}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:400px}
+.theme-card{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;transition:transform .15s,border-color .2s,background .2s}
+.theme-card:active{transform:scale(.96)}
+.theme-card:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.1)}
+.theme-card .icon{font-size:2.5rem;margin-bottom:.3em}
+.theme-card .name{font-size:1rem;font-weight:600}
+.theme-card .desc{font-size:.7rem;color:#999;margin-top:.2em}
+.theme-card .mechanic{font-size:.6rem;color:#a29bfe;margin-top:.3em;font-weight:600}
+#setup-screen{background:linear-gradient(180deg,#1a1a2e,#16213e)}
+#setup-screen h2{font-size:1.6rem;margin-bottom:.3em}
+.setup-instructions{max-width:320px;text-align:center;line-height:1.6;margin-bottom:1.5em;color:#bbb;font-size:.9rem}
+.setup-instructions strong{color:#fff}
+.setup-visual{font-size:4rem;margin-bottom:.5em;animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.foot-position{display:flex;gap:20px;margin-bottom:1.5em}
+.foot-option{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 16px;text-align:center;cursor:pointer;transition:all .2s;min-width:90px}
+.foot-option.active{border-color:#6c5ce7;background:rgba(108,92,231,.15)}
+.foot-option .foot-icon{font-size:1.5rem}
+.foot-option .foot-label{font-size:.75rem;color:#aaa;margin-top:4px}
+.btn{border:none;color:#fff;font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:600;padding:.85em 2.5em;border-radius:50px;cursor:pointer;transition:transform .15s;margin:.3em}
+.btn:active{transform:scale(.95)}
+.btn-primary{background:linear-gradient(135deg,#6c5ce7,#a29bfe);box-shadow:0 4px 20px rgba(108,92,231,.4)}
+.btn-secondary{background:rgba(255,255,255,.1);font-size:.95rem;padding:.7em 1.8em}
+#calibrate-screen{background:rgba(26,26,46,.97)}
+#calibrate-screen h2{font-size:1.5rem;margin-bottom:.3em}
+.calibrate-anim{font-size:5rem;margin:.5em 0}
+.calibrate-status{font-size:1rem;color:#aaa;margin-bottom:1em}
+.angle-readout{font-size:1.8rem;font-weight:700;color:#a29bfe;margin-bottom:.5em;font-variant-numeric:tabular-nums}
+#hud{position:absolute;top:0;left:0;right:0;padding:10px 16px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5;pointer-events:none}
+#hud .score-block{text-align:left}
+#hud .score{font-size:1.6rem;font-weight:700}
+#hud .streak{font-size:.75rem;color:#aaa;min-height:1em}
+#hud .hearts{font-size:1.2rem;margin-top:2px}
+#hud .rom-block{text-align:center}
+#hud .rom-label{font-size:.6rem;color:#777;text-transform:uppercase;letter-spacing:1px}
+#hud .rom-value{font-size:1rem;font-weight:600}
+#hud .stats-block{text-align:right}
+#hud .catches{font-size:1rem}
+#hud .timer{font-size:.8rem;color:#aaa}
+#hud .bonus-info{font-size:.65rem;color:#a29bfe;margin-top:2px}
+#angle-bar{position:absolute;right:6px;top:15%;bottom:15%;width:8px;background:rgba(255,255,255,.06);border-radius:4px;z-index:4;pointer-events:none}
+#angle-marker{position:absolute;width:14px;height:14px;background:#a29bfe;border-radius:50%;left:-3px;transition:top .1s;box-shadow:0 0 10px rgba(162,155,254,.5)}
+#angle-labels{position:absolute;right:20px;top:15%;bottom:15%;width:30px;z-index:4;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end}
+.angle-label{font-size:.55rem;color:#555;text-transform:uppercase;letter-spacing:.5px}
+#level-banner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2rem;font-weight:700;opacity:0;z-index:6;pointer-events:none;text-shadow:0 0 30px rgba(108,92,231,.6)}
+#results-screen{background:rgba(26,26,46,.96)}
+#results-screen h2{font-size:1.8rem;margin-bottom:.5em}
+.result-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:300px;margin-bottom:1.5em}
+.result-stat{background:rgba(255,255,255,.06);border-radius:12px;padding:12px;text-align:center}
+.result-stat .val{font-size:1.5rem;font-weight:700;color:#a29bfe}
+.result-stat .label{font-size:.7rem;color:#888;margin-top:4px}
+.sensitivity-row{display:flex;align-items:center;gap:10px;margin-bottom:1em}
+.sensitivity-row label{font-size:.8rem;color:#aaa}
+.sensitivity-row input[type=range]{-webkit-appearance:none;width:120px;height:6px;background:rgba(255,255,255,.15);border-radius:3px;outline:none}
+.sensitivity-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:#a29bfe;border-radius:50%;cursor:pointer}
 </style>
 </head>
 <body>
-
 <canvas id="game"></canvas>
-
 <div id="hud" class="hidden">
   <div class="score-block">
     <div class="score" id="hud-score">0</div>
@@ -304,60 +83,45 @@ canvas { display: block; width: 100%; height: 100%; }
   <div class="rom-block">
     <div class="rom-label">Ankle Angle</div>
     <div class="rom-value" id="hud-angle">0°</div>
+    <div class="bonus-info" id="hud-bonus"></div>
   </div>
   <div class="stats-block">
     <div class="catches" id="hud-catches">🎯 0/0</div>
     <div class="timer" id="hud-timer">2:00</div>
   </div>
 </div>
-
-<div id="angle-bar" class="hidden">
-  <div id="angle-marker"></div>
-</div>
+<div id="angle-bar" class="hidden"><div id="angle-marker"></div></div>
 <div id="angle-labels" class="hidden">
   <span class="angle-label">DF ↑</span>
   <span class="angle-label">Neutral</span>
   <span class="angle-label">PF ↓</span>
 </div>
-
 <div id="level-banner"></div>
-
-<!-- ═══ Theme Selection ═══ -->
 <div class="screen" id="theme-screen">
   <h1>🦶 Ankle Hero</h1>
   <p class="tagline">Pick a world. Move your foot. Be the hero.</p>
   <div class="theme-grid" id="theme-grid"></div>
 </div>
-
-<!-- ═══ Setup Screen ═══ -->
 <div class="screen hidden" id="setup-screen">
   <div class="setup-visual" id="setup-icon">🦁</div>
   <h2 id="setup-title">Zoo Rescue</h2>
-  <div class="setup-instructions">
-    <strong>Strap your phone to the top of your foot</strong> (or hold it against your shin).<br><br>
-    You'll move the <strong>basket up</strong> by pulling your toes up <em>(dorsiflexion)</em> and <strong>down</strong> by pointing toes <em>(plantar flexion)</em>.<br><br>
-    Catch the falling items!
+  <div class="setup-instructions" id="setup-desc">
+    <strong>Strap your phone to the top of your foot</strong> (or hold against shin).<br><br>
+    Move your <strong>platform up/down</strong> with your ankle to catch falling items!<br><br>
+    <span id="setup-mechanic-text"></span>
   </div>
   <div class="foot-position">
-    <div class="foot-option active" data-foot="top" onclick="setFootPos('top')">
-      <div class="foot-icon">🦶</div>
-      <div class="foot-label">Top of Foot</div>
-    </div>
-    <div class="foot-option" data-foot="shin" onclick="setFootPos('shin')">
-      <div class="foot-icon">🦵</div>
-      <div class="foot-label">Shin</div>
-    </div>
+    <div class="foot-option active" data-foot="top" onclick="setFootPos('top')"><div class="foot-icon">🦶</div><div class="foot-label">Top of Foot</div></div>
+    <div class="foot-option" data-foot="shin" onclick="setFootPos('shin')"><div class="foot-icon">🦵</div><div class="foot-label">Shin</div></div>
   </div>
   <div class="sensitivity-row">
     <label>Sensitivity</label>
     <input type="range" min="1" max="5" value="3" id="sensitivity-slider" oninput="updateSensitivity()">
-    <span id="sensitivity-val" style="font-size:0.8rem;color:#a29bfe;min-width:20px">3</span>
+    <span id="sensitivity-val" style="font-size:.8rem;color:#a29bfe;min-width:20px">3</span>
   </div>
   <button class="btn btn-primary" onclick="goCalibrate()">Next → Calibrate</button>
   <button class="btn btn-secondary" onclick="goThemes()">← Back</button>
 </div>
-
-<!-- ═══ Calibration ═══ -->
 <div class="screen hidden" id="calibrate-screen">
   <h2>Calibrate</h2>
   <div class="calibrate-anim">🦶</div>
@@ -366,27 +130,13 @@ canvas { display: block; width: 100%; height: 100%; }
   <button class="btn btn-primary" id="cal-btn" onclick="calibrate()">Set Neutral</button>
   <button class="btn btn-secondary" onclick="showScreen('setup-screen')">← Back</button>
 </div>
-
-<!-- ═══ Results ═══ -->
 <div class="screen hidden" id="results-screen">
   <h2 id="results-title">🎉 Great Job!</h2>
   <div class="result-stats">
-    <div class="result-stat">
-      <div class="val" id="res-score">0</div>
-      <div class="label">Score</div>
-    </div>
-    <div class="result-stat">
-      <div class="val" id="res-caught">0/0</div>
-      <div class="label">Caught</div>
-    </div>
-    <div class="result-stat">
-      <div class="val" id="res-rom">0°</div>
-      <div class="label">Max ROM</div>
-    </div>
-    <div class="result-stat">
-      <div class="val" id="res-streak">0</div>
-      <div class="label">Best Streak</div>
-    </div>
+    <div class="result-stat"><div class="val" id="res-score">0</div><div class="label">Score</div></div>
+    <div class="result-stat"><div class="val" id="res-caught">0/0</div><div class="label">Caught</div></div>
+    <div class="result-stat"><div class="val" id="res-rom">0°</div><div class="label">Max ROM</div></div>
+    <div class="result-stat"><div class="val" id="res-streak">0</div><div class="label">Best Streak</div></div>
   </div>
   <button class="btn btn-primary" onclick="startGame()">▶ Play Again</button>
   <button class="btn btn-secondary" onclick="goThemes()">Change Theme</button>
@@ -394,1181 +144,1080 @@ canvas { display: block; width: 100%; height: 100%; }
 
 <script>
 // ════════════════════════════════════════════════════════
-//  ANKLE HERO v2 — Therapeutic Ankle ROM Game
-//  Visual Overhaul: visible collection, damage fx, popups
+//  ANKLE HERO v3 — Full Rewrite
+//  Core: horizontal platform, vertical interception
+//  Each theme: unique mechanics, visuals, events
 // ════════════════════════════════════════════════════════
-
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+const C = document.getElementById('game');
+const X = C.getContext('2d');
 let W, H, dpr;
-
 function resize() {
-  dpr = window.devicePixelRatio || 1;
-  W = window.innerWidth;
-  H = window.innerHeight;
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dpr = devicePixelRatio || 1;
+  W = innerWidth; H = innerHeight;
+  C.width = W * dpr; C.height = H * dpr;
+  C.style.width = W + 'px'; C.style.height = H + 'px';
+  X.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-window.addEventListener('resize', resize);
-resize();
+addEventListener('resize', resize); resize();
 
-// ══════════════════════
-//  THEMES
-// ══════════════════════
+const CATCH_ZONE = 30; // Y tolerance for catches
+const GRAVITY = 400;   // for dino bounce physics
+
+// ═══ THEMES ═══
 const THEMES = {
   zoo: {
-    name: 'Zoo Rescue',
-    icon: '🦁',
-    desc: 'Catch baby animals!',
-    bg1: '#1a3a1a', bg2: '#0d2a0d',
-    accent: '#6bcb77',
-    basketEmoji: '🧺',
-    basketLabel: 'Rescue Basket',
-    bucketColor: '#8B6914',
-    bucketHighlight: '#C49A28',
+    name: 'Zoo Rescue', icon: '🦁', desc: 'Catch baby animals!',
+    mechDesc: '🎯 Mama+baby pairs — catch both for 3× bonus!',
+    mechanicTag: 'PAIR BONUS',
+    accent: '#6bcb77', skyColors: ['#87ceeb','#5ba3d9','#2d7a3a'],
+    platColor: '#2d7a27', platHighlight: '#5cb85c',
     items: [
-      { emoji: '🐵', pts: 10, name: 'Monkey' },
-      { emoji: '🐘', pts: 15, name: 'Elephant' },
-      { emoji: '🦒', pts: 10, name: 'Giraffe' },
-      { emoji: '🐧', pts: 15, name: 'Penguin' },
-      { emoji: '🐼', pts: 20, name: 'Panda' },
-      { emoji: '🦁', pts: 25, name: 'Lion Cub', rare: true }
+      {e:'🐵',pts:10,n:'Monkey'},{e:'🐘',pts:15,n:'Elephant'},{e:'🦒',pts:10,n:'Giraffe'},
+      {e:'🐧',pts:15,n:'Penguin'},{e:'🐼',pts:20,n:'Panda'},{e:'🦁',pts:25,n:'Lion Cub',rare:1}
     ],
-    hazards: [{ emoji: '🪨', name: 'Rock', pts: -10 }],
-    bgElements: ['🌿', '🌴', '🌳'],
-    groundColor: '#2d5a27',
-    skyColors: ['#87ceeb', '#5ba3d9', '#2d7a3a']
+    hazards: [{e:'🐍',pts:-10,n:'Snake'}],
+    pairs: [{mama:'🦁',baby:'🐱',bonus:3},{mama:'🐘',baby:'🐭',bonus:3},{mama:'🐼',baby:'🐻',bonus:3}],
   },
   dino: {
-    name: 'Dino Eggs',
-    icon: '🦕',
-    desc: 'Save the dino eggs!',
-    bg1: '#2a1a0a', bg2: '#1a0f05',
-    accent: '#ff9f43',
-    basketEmoji: '🪹',
-    basketLabel: 'Nest',
-    bucketColor: '#6B4226',
-    bucketHighlight: '#A0694B',
+    name: 'Dino Eggs', icon: '🦕', desc: 'Save the dino eggs!',
+    mechDesc: '🥚 Eggs BOUNCE on miss — up to 3 chances! Watch for eruptions!',
+    mechanicTag: 'BOUNCE MODE',
+    accent: '#ff9f43', skyColors: ['#ff7675','#d35400','#2d1a0a'],
+    platColor: '#6B4226', platHighlight: '#A0694B',
     items: [
-      { emoji: '🥚', pts: 10, name: 'Egg' },
-      { emoji: '🦴', pts: 8, name: 'Bone' },
-      { emoji: '🪺', pts: 20, name: 'Golden Egg' },
-      { emoji: '🦎', pts: 12, name: 'Baby Dino' },
-      { emoji: '🌋', pts: 5, name: 'Lava Rock' },
-      { emoji: '🦕', pts: 30, name: 'T-Rex Baby', rare: true }
+      {e:'🥚',pts:10,n:'Egg'},{e:'🦴',pts:8,n:'Bone'},{e:'🪺',pts:20,n:'Golden Egg'},
+      {e:'🦎',pts:12,n:'Baby Dino'},{e:'🦕',pts:30,n:'T-Rex Baby',rare:1}
     ],
-    hazards: [{ emoji: '☄️', name: 'Meteor', pts: -10 }],
-    bgElements: ['🌿', '🪨', '🌋'],
-    groundColor: '#5a3a1a',
-    skyColors: ['#ff7675', '#d35400', '#2d1a0a']
+    hazards: [{e:'☄️',pts:-10,n:'Meteor'}],
+    bounceMax: 3
   },
   ocean: {
-    name: 'Ocean Catch',
-    icon: '🌊',
-    desc: 'Catch sea friends!',
-    bg1: '#0a2a4a', bg2: '#051a2a',
-    accent: '#0abde3',
-    basketEmoji: '🪣',
-    basketLabel: 'Bucket',
-    bucketColor: '#1565C0',
-    bucketHighlight: '#42A5F5',
+    name: 'Ocean Catch', icon: '🌊', desc: 'Catch sea friends!',
+    mechDesc: '🐟 Fish come in SCHOOLS — catch the whole group for chain bonus!',
+    mechanicTag: 'SCHOOL CHAIN',
+    accent: '#0abde3', skyColors: ['#74b9ff','#0984e3','#0a2a4a'],
+    platColor: '#1565C0', platHighlight: '#42A5F5',
     items: [
-      { emoji: '🐟', pts: 10, name: 'Fish' },
-      { emoji: '🐠', pts: 12, name: 'Tropical Fish' },
-      { emoji: '🦀', pts: 15, name: 'Crab' },
-      { emoji: '🐙', pts: 15, name: 'Octopus' },
-      { emoji: '🐚', pts: 8, name: 'Shell' },
-      { emoji: '🐬', pts: 30, name: 'Dolphin', rare: true }
+      {e:'🐟',pts:10,n:'Fish'},{e:'🐠',pts:12,n:'Tropical'},{e:'🦀',pts:15,n:'Crab'},
+      {e:'🐙',pts:15,n:'Octopus'},{e:'🐚',pts:8,n:'Shell'},{e:'🐬',pts:30,n:'Dolphin',rare:1}
     ],
-    hazards: [{ emoji: '🪼', name: 'Jellyfish', pts: -10 }],
-    bgElements: ['🫧', '🌊', '🐚'],
-    groundColor: '#1a4a6a',
-    skyColors: ['#74b9ff', '#0984e3', '#0a2a4a']
+    hazards: [{e:'🪼',pts:-10,n:'Jellyfish'}],
+    schoolSize: [3,4,5]
   },
   space: {
-    name: 'Star Catcher',
-    icon: '🚀',
-    desc: 'Catch stars & planets!',
-    bg1: '#0a0a2e', bg2: '#050515',
-    accent: '#ffd93d',
-    basketEmoji: '🛸',
-    basketLabel: 'Space Pod',
-    bucketColor: '#4A148C',
-    bucketHighlight: '#7B1FA2',
+    name: 'Star Catcher', icon: '🚀', desc: 'Catch stars & planets!',
+    mechDesc: '🌀 Items fall in CURVED paths. Watch for black holes bending gravity!',
+    mechanicTag: 'CURVED PATHS',
+    accent: '#ffd93d', skyColors: ['#2d1b69','#0a0a2e','#050515'],
+    platColor: '#4A148C', platHighlight: '#9C27B0',
     items: [
-      { emoji: '⭐', pts: 10, name: 'Star' },
-      { emoji: '🌟', pts: 15, name: 'Bright Star' },
-      { emoji: '🪐', pts: 20, name: 'Planet' },
-      { emoji: '🌙', pts: 12, name: 'Moon' },
-      { emoji: '💫', pts: 8, name: 'Shooting Star' },
-      { emoji: '👽', pts: 30, name: 'Alien Friend', rare: true }
+      {e:'⭐',pts:10,n:'Star'},{e:'🌟',pts:15,n:'Bright Star'},{e:'🪐',pts:20,n:'Planet'},
+      {e:'🌙',pts:12,n:'Moon'},{e:'💫',pts:8,n:'Shooting Star'},{e:'👽',pts:30,n:'Alien',rare:1}
     ],
-    hazards: [{ emoji: '☄️', name: 'Asteroid', pts: -10 }],
-    bgElements: ['✨', '💫', '🌌'],
-    groundColor: '#1a1a3e',
-    skyColors: ['#2d1b69', '#0a0a2e', '#050515']
+    hazards: [{e:'☄️',pts:-10,n:'Asteroid'}]
   },
   unicorn: {
-    name: 'Rainbow Quest',
-    icon: '🦄',
-    desc: 'Catch rainbow gems!',
-    bg1: '#2a1a3e', bg2: '#1a0f2e',
-    accent: '#fd79a8',
-    basketEmoji: '☁️',
-    basketLabel: 'Cloud Basket',
-    bucketColor: '#8E24AA',
-    bucketHighlight: '#CE93D8',
+    name: 'Rainbow Quest', icon: '🦄', desc: 'Catch rainbow gems!',
+    mechDesc: '🌈 COLOR CHAIN — catch same color in a row for 2×→4× multiplier!',
+    mechanicTag: 'COLOR CHAIN',
+    accent: '#fd79a8', skyColors: ['#a29bfe','#6c5ce7','#2a1a3e'],
+    platColor: '#8E24AA', platHighlight: '#CE93D8',
     items: [
-      { emoji: '💎', pts: 10, name: 'Crystal' },
-      { emoji: '🌈', pts: 15, name: 'Rainbow' },
-      { emoji: '🦋', pts: 12, name: 'Butterfly' },
-      { emoji: '🌸', pts: 8, name: 'Flower' },
-      { emoji: '✨', pts: 10, name: 'Sparkle' },
-      { emoji: '🦄', pts: 30, name: 'Baby Unicorn', rare: true }
+      {e:'💎',pts:10,n:'Crystal',color:'blue'},{e:'❤️',pts:10,n:'Ruby',color:'red'},
+      {e:'💚',pts:10,n:'Emerald',color:'green'},{e:'⭐',pts:12,n:'Gold Star',color:'gold'},
+      {e:'💜',pts:10,n:'Amethyst',color:'purple'},{e:'🦄',pts:30,n:'Unicorn',rare:1,color:'rainbow'}
     ],
-    hazards: [{ emoji: '🌩️', name: 'Storm Cloud', pts: -10 }],
-    bgElements: ['🌸', '✨', '🌙'],
-    groundColor: '#3a2a5a',
-    skyColors: ['#a29bfe', '#6c5ce7', '#2a1a3e']
+    hazards: [{e:'🌩️',pts:-10,n:'Storm Cloud'}],
+    colorMap: {red:'#ff6b6b',blue:'#74b9ff',green:'#6bcb77',gold:'#ffd93d',purple:'#a29bfe',rainbow:'#fd79a8'}
   },
   hero: {
-    name: 'Super Rescue',
-    icon: '🦸',
-    desc: 'Save the citizens!',
-    bg1: '#1a1a3e', bg2: '#0a0a1e',
-    accent: '#e74c3c',
-    basketEmoji: '🛡️',
-    basketLabel: 'Shield',
-    bucketColor: '#B71C1C',
-    bucketHighlight: '#EF5350',
+    name: 'Super Rescue', icon: '🦸', desc: 'Save the citizens!',
+    mechDesc: '⬆️ Catch HIGHER = more points! Max dorsiflexion = max score!',
+    mechanicTag: 'HEIGHT BONUS',
+    accent: '#e74c3c', skyColors: ['#636e72','#2d3436','#1a1a3e'],
+    platColor: '#B71C1C', platHighlight: '#EF5350',
     items: [
-      { emoji: '👶', pts: 15, name: 'Baby' },
-      { emoji: '🐱', pts: 10, name: 'Kitten' },
-      { emoji: '👧', pts: 15, name: 'Kid' },
-      { emoji: '🐶', pts: 10, name: 'Puppy' },
-      { emoji: '💰', pts: 8, name: 'Treasure' },
-      { emoji: '🦸‍♀️', pts: 30, name: 'Hero Partner', rare: true }
+      {e:'👶',pts:15,n:'Baby'},{e:'🐱',pts:10,n:'Kitten'},{e:'👧',pts:15,n:'Kid'},
+      {e:'🐶',pts:10,n:'Puppy'},{e:'💰',pts:8,n:'Treasure'},{e:'🦸‍♀️',pts:30,n:'Hero',rare:1}
     ],
-    hazards: [{ emoji: '💣', name: 'Bomb', pts: -10 }],
-    bgElements: ['🏢', '🏗️', '🌆'],
-    groundColor: '#2a2a4a',
-    skyColors: ['#636e72', '#2d3436', '#1a1a3e']
+    hazards: [{e:'💣',pts:-10,n:'Bomb'}]
   }
 };
 
-// Build theme grid
+// Build theme selection grid
 const grid = document.getElementById('theme-grid');
-Object.keys(THEMES).forEach(key => {
-  const t = THEMES[key];
-  const card = document.createElement('div');
-  card.className = 'theme-card';
-  card.onclick = () => selectTheme(key);
-  card.innerHTML = `
-    <div class="icon">${t.icon}</div>
-    <div class="name">${t.name}</div>
-    <div class="desc">${t.desc}</div>
-  `;
-  grid.appendChild(card);
+Object.entries(THEMES).forEach(([k,t]) => {
+  const c = document.createElement('div');
+  c.className = 'theme-card'; c.onclick = () => selectTheme(k);
+  c.innerHTML = `<div class="icon">${t.icon}</div><div class="name">${t.name}</div>
+    <div class="desc">${t.desc}</div><div class="mechanic">${t.mechanicTag}</div>`;
+  grid.appendChild(c);
 });
 
-// ══════════════════════
-//  GAME STATE
-// ══════════════════════
-let currentTheme = null;
-let theme = null;
-let footPosition = 'top';
-let sensitivity = 3;
-let calibrationBeta = 0;
-let calibrated = false;
+// ═══ GAME STATE ═══
+let TK = null, TH = null; // theme key, theme object
+let footPos = 'top', sens = 3, calBeta = 0, calibrated = false;
+let gameOn = false, raf = null, lt = 0;
+let rawBeta = 0, rawGamma = 0, ankleAngle = 0, useMouse = false, mouseY = 0;
 
-let gameRunning = false;
-let animFrame = null;
-let lastTime = 0;
+let plat = { y: 0, targetY: 0 };
+let items = [], particles = [], texts = [], splats = [];
+let collected = []; // visible items on platform
 
-// Motion
-let rawBeta = 0;
-let rawGamma = 0;
-let ankleAngle = 0;
-let useMouse = false;
-let mouseY = 0;
+// Stats
+let score=0, total=0, caught=0, missed=0, streak=0, bestStreak=0;
+let maxDF=0, maxPF=0, gameTime=0, gameDur=120, level=1, lvlTimer=0, spawnTimer=0;
+let health=3, maxHP=3, dmgFlash=0, platFlash=0, screenShake=0;
 
-// Game objects
-let basket = { y: 0, targetY: 0, width: 90, height: 55 };
-let items = [];
-let particles = [];
-let floatingTexts = [];
-let bgParticles = [];
-let collectedInBasket = []; // visible items sitting in the basket
-let catchAnimations = [];   // items animating into basket
-let groundSplats = [];      // miss splat effects
+// Theme-specific state
+let pairState = {};     // zoo: track mama/baby pairs
+let schoolGroups = {};  // ocean: track school groups
+let colorChain = { color: null, count: 0 }; // rainbow: color chain
+let specialTimer = 0;   // special event cooldown
+let blackHole = null;   // space: active black hole
+let tideShift = 0;      // ocean: tide offset
 
-// Health & damage
-let health = 3;
-let maxHealth = 3;
-let damageFlash = 0;     // 0-1 red overlay
-let basketDamageFlash = 0; // basket-specific red flash
+let nextSchoolId = 0;
 
-// Score / stats
-let score = 0;
-let totalItems = 0;
-let caughtItems = 0;
-let missedItems = 0;
-let streak = 0;
-let bestStreak = 0;
-let maxDF = 0;
-let maxPF = 0;
-let gameTime = 0;
-let gameDuration = 120;
-let level = 1;
-let levelTimer = 0;
-let spawnTimer = 0;
-let screenShake = 0;
-
-// ── Screen management ──
+// ═══ SCREENS ═══
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   if (id) document.getElementById(id).classList.remove('hidden');
 }
-
 function goThemes() {
-  gameRunning = false;
-  if (animFrame) cancelAnimationFrame(animFrame);
+  gameOn = false; if (raf) cancelAnimationFrame(raf);
   document.getElementById('hud').classList.add('hidden');
   document.getElementById('angle-bar').classList.add('hidden');
   document.getElementById('angle-labels').classList.add('hidden');
   showScreen('theme-screen');
 }
-
-// ── Theme selection ──
-function selectTheme(key) {
-  currentTheme = key;
-  theme = THEMES[key];
-  document.getElementById('setup-icon').textContent = theme.icon;
-  document.getElementById('setup-title').textContent = theme.name;
+function selectTheme(k) {
+  TK = k; TH = THEMES[k];
+  document.getElementById('setup-icon').textContent = TH.icon;
+  document.getElementById('setup-title').textContent = TH.name;
+  document.getElementById('setup-mechanic-text').innerHTML = TH.mechDesc;
   showScreen('setup-screen');
 }
-
-// ── Setup ──
-function setFootPos(pos) {
-  footPosition = pos;
-  document.querySelectorAll('.foot-option').forEach(el => {
-    el.classList.toggle('active', el.dataset.foot === pos);
-  });
+function setFootPos(p) {
+  footPos = p;
+  document.querySelectorAll('.foot-option').forEach(el => el.classList.toggle('active', el.dataset.foot === p));
 }
-
 function updateSensitivity() {
-  sensitivity = parseInt(document.getElementById('sensitivity-slider').value);
-  document.getElementById('sensitivity-val').textContent = sensitivity;
+  sens = +document.getElementById('sensitivity-slider').value;
+  document.getElementById('sensitivity-val').textContent = sens;
 }
 
-// ── Motion ──
-function requestMotionPermission() {
-  return new Promise(resolve => {
-    if (typeof DeviceOrientationEvent !== 'undefined' &&
-        typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission().then(state => {
-        resolve(state === 'granted');
-      }).catch(() => resolve(false));
-    } else if ('DeviceOrientationEvent' in window) {
-      resolve(true);
-    } else {
-      resolve(false);
-    }
-  });
-}
-
-let motionEnabled = false;
+// ═══ MOTION ═══
+let motionOn = false;
 function enableMotion() {
-  if (motionEnabled) return;
-  motionEnabled = true;
-  window.addEventListener('deviceorientation', e => {
-    rawBeta = e.beta || 0;
-    rawGamma = e.gamma || 0;
-  });
+  if (motionOn) return; motionOn = true;
+  addEventListener('deviceorientation', e => { rawBeta = e.beta||0; rawGamma = e.gamma||0; });
 }
+async function reqMotion() {
+  if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+    try { return (await DeviceOrientationEvent.requestPermission()) === 'granted'; } catch { return false; }
+  }
+  return 'DeviceOrientationEvent' in window;
+}
+const isDsk = !('ontouchstart' in window) && !navigator.maxTouchPoints;
+if (isDsk) useMouse = true;
+C.addEventListener('mousemove', e => { if (useMouse) mouseY = (e.clientY - H/2)/(H/2); });
+C.addEventListener('touchmove', e => { if (useMouse) { e.preventDefault(); mouseY = (e.touches[0].clientY - H/2)/(H/2); }}, {passive:false});
 
-// Mouse fallback
-const isDesktop = !('ontouchstart' in window) && !navigator.maxTouchPoints;
-if (isDesktop) useMouse = true;
-canvas.addEventListener('mousemove', e => {
-  if (!useMouse) return;
-  mouseY = (e.clientY - H / 2) / (H / 2);
-});
-canvas.addEventListener('touchmove', e => {
-  if (!useMouse) return;
-  e.preventDefault();
-  mouseY = (e.touches[0].clientY - H / 2) / (H / 2);
-}, { passive: false });
-
-// ── Calibration ──
-let calInterval = null;
+// ═══ CALIBRATION ═══
+let calInt = null;
 async function goCalibrate() {
-  const granted = await requestMotionPermission();
-  if (granted) enableMotion(); else useMouse = true;
+  if (await reqMotion()) enableMotion(); else useMouse = true;
   showScreen('calibrate-screen');
-  if (calInterval) clearInterval(calInterval);
-  calInterval = setInterval(() => {
-    const angle = useMouse ? 0 : rawBeta;
-    document.getElementById('cal-angle').textContent = angle.toFixed(1) + '°';
+  if (calInt) clearInterval(calInt);
+  calInt = setInterval(() => {
+    document.getElementById('cal-angle').textContent = (useMouse ? 0 : rawBeta).toFixed(1) + '°';
   }, 100);
 }
-
 function calibrate() {
-  calibrationBeta = rawBeta;
-  calibrated = true;
+  calBeta = rawBeta; calibrated = true;
   document.getElementById('cal-status').innerHTML = '✅ Neutral set at <strong>' + rawBeta.toFixed(1) + '°</strong>. Ready!';
-  document.getElementById('cal-btn').textContent = '▶ START GAME';
-  document.getElementById('cal-btn').onclick = () => {
-    if (calInterval) clearInterval(calInterval);
-    startGame();
-  };
+  const b = document.getElementById('cal-btn');
+  b.textContent = '▶ START GAME';
+  b.onclick = () => { if (calInt) clearInterval(calInt); startGame(); };
 }
-
-// ── Angle computation ──
-function computeAnkleAngle() {
+function calcAngle() {
   if (useMouse) return -mouseY * 30;
-  let delta = rawBeta - calibrationBeta;
-  if (footPosition === 'top') delta = -delta;
-  const sensMultiplier = 0.5 + (sensitivity - 1) * 0.35;
-  delta *= sensMultiplier;
-  return Math.max(-40, Math.min(40, delta));
+  let d = rawBeta - calBeta;
+  if (footPos === 'top') d = -d;
+  d *= 0.5 + (sens - 1) * 0.35;
+  return Math.max(-40, Math.min(40, d));
 }
 
-// ═════════════════════════════════════
-//  VISUAL EFFECTS SYSTEM
-// ═════════════════════════════════════
-
-// Floating score text
-function spawnFloatingText(x, y, text, color, size) {
-  floatingTexts.push({
-    x, y,
-    text,
-    color: color || '#fff',
-    size: size || 20,
-    life: 1.2,
-    maxLife: 1.2,
-    vy: -80,
-    scale: 1.3 // starts big, shrinks to 1
-  });
+// ═══ VFX ═══
+function addText(x, y, text, color, size) {
+  texts.push({ x, y, text, color: color||'#fff', size: size||20, life: 1.2, max: 1.2, vy: -80, scale: 1.3 });
 }
-
-// Burst particles (colored dots)
-function spawnParticles(x, y, color, count, speed) {
-  const spd = speed || 180;
-  for (let i = 0; i < count; i++) {
-    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
-    particles.push({
-      x, y,
-      vx: Math.cos(angle) * (spd * 0.5 + Math.random() * spd * 0.5),
-      vy: Math.sin(angle) * (spd * 0.5 + Math.random() * spd * 0.5) - 40,
-      life: 0.5 + Math.random() * 0.4,
-      maxLife: 0.9,
-      r: 3 + Math.random() * 5,
-      color
-    });
+function burst(x, y, color, n, spd) {
+  spd = spd || 180;
+  for (let i = 0; i < n; i++) {
+    const a = Math.PI*2*i/n + (Math.random()-.5)*.5;
+    particles.push({ x, y, vx: Math.cos(a)*(spd*.5+Math.random()*spd*.5),
+      vy: Math.sin(a)*(spd*.5+Math.random()*spd*.5)-40, life: .5+Math.random()*.4, max: .9,
+      r: 3+Math.random()*5, color });
   }
 }
-
-// Ring/shockwave effect
-function spawnRing(x, y, color) {
-  particles.push({
-    x, y,
-    vx: 0, vy: 0,
-    life: 0.5, maxLife: 0.5,
-    r: 10,
-    color,
-    isRing: true,
-    ringRadius: 10,
-    ringMaxRadius: 80
-  });
+function ring(x, y, color) {
+  particles.push({ x, y, vx:0, vy:0, life:.5, max:.5, r:10, color, isRing:1, rr:10, rrMax:80 });
+}
+function emojiPop(x, y, emoji) {
+  particles.push({ x, y, vx:(Math.random()-.5)*30, vy:-60, life:.9, max:.9, r:24, color:'emoji', emoji, scale:1.4 });
+}
+function addSplat(x, emoji) {
+  splats.push({ x, y: H-10, emoji, life:1.5, max:1.5, sq:0 });
+  for (let i=0;i<6;i++) particles.push({ x:x+(Math.random()-.5)*20, y:H-15,
+    vx:(Math.random()-.5)*120, vy:-40-Math.random()*60, life:.4+Math.random()*.3, max:.7, r:2+Math.random()*3, color:'rgba(255,255,255,.5)' });
 }
 
-// Emoji pop (caught item floats up and fades)
-function spawnEmojiPop(x, y, emoji) {
-  particles.push({
-    x, y,
-    vx: (Math.random() - 0.5) * 30,
-    vy: -60,
-    life: 0.9, maxLife: 0.9,
-    r: 24, color: 'emoji',
-    emoji, scale: 1.4
-  });
-}
-
-// Catch animation (item shrinks toward basket)
-function startCatchAnimation(item) {
-  catchAnimations.push({
-    emoji: item.emoji,
-    fromX: item.x, fromY: item.y,
-    size: item.size,
-    time: 0,
-    duration: 0.25
-  });
-}
-
-// Add to collected items in basket
-function addToBasket(emoji) {
-  // Keep max 6 visible items
-  if (collectedInBasket.length >= 6) collectedInBasket.shift();
-  const slot = collectedInBasket.length;
-  collectedInBasket.push({
-    emoji,
-    offsetX: (Math.random() - 0.5) * 40,
-    offsetY: -8 - slot * 5 + Math.random() * 4,
-    bobPhase: Math.random() * Math.PI * 2,
-    age: 0,
-    bounceIn: 1.0 // starts bouncing, decays to 0
-  });
-}
-
-// Ground splat when item missed
-function spawnGroundSplat(x, emoji) {
-  groundSplats.push({
-    x, y: H - 10,
-    emoji,
-    life: 1.5,
-    maxLife: 1.5,
-    squash: 0
-  });
-  // Splat particles
-  for (let i = 0; i < 6; i++) {
-    particles.push({
-      x: x + (Math.random() - 0.5) * 20,
-      y: H - 15,
-      vx: (Math.random() - 0.5) * 120,
-      vy: -40 - Math.random() * 60,
-      life: 0.4 + Math.random() * 0.3,
-      maxLife: 0.7,
-      r: 2 + Math.random() * 3,
-      color: 'rgba(255,255,255,0.5)'
-    });
-  }
-}
-
-// ── Item spawning ──
-function spawnItem() {
-  let itemDef;
-  if (Math.random() < 0.12 + level * 0.015) {
-    itemDef = { ...theme.hazards[0], isHazard: true };
+// ═══ ITEM SPAWNING ═══
+let spawnId = 0;
+function spawnOne(overrides) {
+  const isHaz = !overrides && Math.random() < .12 + level * .015;
+  let def;
+  if (isHaz) {
+    def = { ...TH.hazards[0], isHaz: true };
+  } else if (overrides) {
+    def = overrides;
   } else {
-    const pool = theme.items.filter(i => !i.rare || Math.random() < 0.08);
-    itemDef = pool[Math.floor(Math.random() * pool.length)];
+    const pool = TH.items.filter(i => !i.rare || Math.random() < .07);
+    def = pool[Math.floor(Math.random() * pool.length)];
   }
-
+  const id = spawnId++;
   const item = {
-    x: 40 + Math.random() * (W - 80),
-    y: -50,
-    emoji: itemDef.emoji,
-    pts: itemDef.pts || 10,
-    name: itemDef.name,
-    isHazard: itemDef.isHazard || false,
-    rare: itemDef.rare || false,
-    speed: 80 + level * 15 + Math.random() * 40,
-    wobble: Math.random() * Math.PI * 2,
-    wobbleAmt: 15 + Math.random() * 20,
-    rotation: 0,
-    rotSpeed: (Math.random() - 0.5) * 2,
-    size: itemDef.rare ? 42 : (itemDef.isHazard ? 34 : 36),
-    caught: false,
-    missed: false,
-    // Trail
-    trail: [],
-    trailTimer: 0
+    id, x: 30 + Math.random() * (W - 60), y: -50,
+    e: def.e, pts: def.pts || 10, name: def.n, isHaz: def.isHaz || false, rare: def.rare || false,
+    speed: 90 + level * 18 + Math.random() * 50,
+    sway: Math.random() * Math.PI * 2, swayAmt: 10 + Math.random() * 25,
+    rot: 0, rotSpd: (Math.random()-.5)*2, size: def.rare ? 44 : (def.isHaz ? 36 : 38),
+    caught: false, missed: false, trail: [], trailT: 0,
+    // Theme-specific
+    color: def.color || null,       // rainbow
+    bounces: 0, vy: 0, usePhys: false, crackLvl: 0,  // dino
+    schoolId: def.schoolId || null,  // ocean
+    pairId: def.pairId || null, pairRole: def.pairRole || null, // zoo
+    curvePhase: Math.random()*Math.PI*2, curveAmp: 30+Math.random()*50 // space
   };
+  // Dino eggs use physics (bounce)
+  if (TK === 'dino' && !item.isHaz) {
+    item.usePhys = true;
+    item.vy = item.speed;
+  }
   items.push(item);
-  totalItems++;
+  total++;
+  return item;
 }
 
-// ── Level Banner ──
-function showBanner(text) {
-  const banner = document.getElementById('level-banner');
-  banner.textContent = text;
-  banner.style.color = theme.accent;
-  banner.style.opacity = 1;
-  banner.style.transform = 'translate(-50%, -50%) scale(1.1)';
-  banner.style.transition = 'opacity 0.7s, transform 0.7s';
-  setTimeout(() => {
-    banner.style.opacity = 0;
-    banner.style.transform = 'translate(-50%, -50%) scale(0.8)';
-  }, 1200);
+function spawnTick() {
+  if (TK === 'zoo') spawnZoo();
+  else if (TK === 'ocean') spawnOcean();
+  else spawnOne();
 }
 
-// ── Init BG elements ──
-function initBG() {
-  bgParticles = [];
-  for (let i = 0; i < 25; i++) {
-    bgParticles.push({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      r: 1 + Math.random() * 2,
-      speed: 10 + Math.random() * 30,
-      opacity: 0.1 + Math.random() * 0.3
-    });
+function spawnZoo() {
+  // 20% chance mama+baby pair
+  if (Math.random() < .2 && TH.pairs) {
+    const pair = TH.pairs[Math.floor(Math.random()*TH.pairs.length)];
+    const pid = spawnId + 100000;
+    const mama = spawnOne({ e:pair.mama, pts:15, n:'Mama', pairId:pid, pairRole:'mama' });
+    // Baby spawns slightly later at similar X
+    setTimeout(() => {
+      if (!gameOn) return;
+      const baby = spawnOne({ e:pair.baby, pts:10, n:'Baby', pairId:pid, pairRole:'baby' });
+      baby.x = mama.x + (Math.random()-.5)*60;
+    }, 400 + Math.random()*300);
+  } else {
+    spawnOne();
   }
 }
 
-// ══════════════════════
-//  START GAME
-// ══════════════════════
+function spawnOcean() {
+  // 30% chance school
+  if (Math.random() < .3) {
+    const sz = TH.schoolSize[Math.floor(Math.random()*TH.schoolSize.length)];
+    const sid = nextSchoolId++;
+    schoolGroups[sid] = { total: sz, caught: 0, done: false };
+    const pool = TH.items.filter(i=>!i.rare);
+    const def = pool[Math.floor(Math.random()*pool.length)];
+    const baseX = 40 + Math.random()*(W-80);
+    for (let i = 0; i < sz; i++) {
+      const item = spawnOne({ e:def.e, pts:def.pts, n:def.n, schoolId:sid });
+      item.x = baseX + (i - sz/2) * 30 + (Math.random()-.5)*10;
+      item.speed = 70 + level * 15; // school moves together
+    }
+  } else {
+    spawnOne();
+  }
+}
+
+// ═══ SPECIAL EVENTS ═══
+function triggerSpecial() {
+  if (TK === 'dino') {
+    // Volcanic eruption — eggs fly UP from bottom
+    addText(W/2, H/2, '🌋 ERUPTION!', '#ff9f43', 32);
+    for (let i=0; i<4; i++) {
+      setTimeout(() => {
+        if (!gameOn) return;
+        const item = spawnOne();
+        item.y = H + 30;
+        item.usePhys = true;
+        item.vy = -(350 + Math.random()*200);
+        item.x = W*0.2 + Math.random()*W*0.6;
+      }, i * 200);
+    }
+  } else if (TK === 'ocean') {
+    // Riptide — shift all items up or down
+    tideShift = (Math.random() > .5 ? 1 : -1) * (60 + Math.random()*40);
+    addText(W/2, H/2, '🌊 RIPTIDE!', '#0abde3', 30);
+    setTimeout(() => { tideShift = 0; }, 3000);
+  } else if (TK === 'space') {
+    // Black hole
+    blackHole = { x: W*0.3 + Math.random()*W*0.4, y: H*0.3+Math.random()*H*0.4, life: 4, max: 4, strength: 150 };
+    addText(W/2, H/2, '🕳️ BLACK HOLE!', '#ffd93d', 30);
+  } else if (TK === 'unicorn') {
+    // Rainbow cascade — all colors rain
+    addText(W/2, H/2, '🌈 RAINBOW CASCADE!', '#fd79a8', 30);
+    const colors = TH.items.filter(i => !i.rare);
+    for (let i=0; i<6; i++) {
+      setTimeout(() => {
+        if (!gameOn) return;
+        const def = colors[i % colors.length];
+        spawnOne({ e:def.e, pts:def.pts*2, n:def.n, color:def.color });
+      }, i * 250);
+    }
+  } else if (TK === 'hero') {
+    // Wind gust — items drift sideways
+    addText(W/2, H/2, '💨 WIND GUST!', '#74b9ff', 30);
+    items.forEach(i => { if (!i.caught && !i.missed) i.windDrift = (Math.random()>.5?1:-1)*80; });
+    setTimeout(() => items.forEach(i => { i.windDrift = 0; }), 3000);
+  } else if (TK === 'zoo') {
+    // Stampede
+    addText(W/2, H/2, '🦁 STAMPEDE!', '#6bcb77', 30);
+    for (let i=0; i<5; i++) {
+      setTimeout(() => { if (gameOn) { const it = spawnOne(); it.speed *= 1.3; } }, i * 150);
+    }
+  }
+}
+
+// ═══ START GAME ═══
 function startGame() {
   showScreen(null);
-  document.getElementById('hud').classList.remove('hidden');
-  document.getElementById('angle-bar').classList.remove('hidden');
-  document.getElementById('angle-labels').classList.remove('hidden');
-
-  score = 0;
-  totalItems = 0;
-  caughtItems = 0;
-  missedItems = 0;
-  streak = 0;
-  bestStreak = 0;
-  maxDF = 0;
-  maxPF = 0;
-  gameTime = 0;
-  level = 1;
-  levelTimer = 0;
-  spawnTimer = 0;
-  screenShake = 0;
-  health = maxHealth;
-  damageFlash = 0;
-  basketDamageFlash = 0;
-  items = [];
-  particles = [];
-  floatingTexts = [];
-  collectedInBasket = [];
-  catchAnimations = [];
-  groundSplats = [];
-
-  basket.y = H * 0.5;
-  basket.targetY = H * 0.5;
-
-  initBG();
-  updateHUD();
-  showBanner(theme.icon + ' Level 1');
-
-  gameRunning = true;
-  lastTime = performance.now();
-  animFrame = requestAnimationFrame(gameLoop);
+  ['hud','angle-bar','angle-labels'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  score=0;total=0;caught=0;missed=0;streak=0;bestStreak=0;
+  maxDF=0;maxPF=0;gameTime=0;level=1;lvlTimer=0;spawnTimer=0;
+  health=maxHP;dmgFlash=0;platFlash=0;screenShake=0;
+  items=[];particles=[];texts=[];splats=[];collected=[];
+  pairState={};schoolGroups={};colorChain={color:null,count:0};
+  specialTimer=0;blackHole=null;tideShift=0;nextSchoolId=0;spawnId=0;
+  plat.y = H*.5; plat.targetY = H*.5;
+  updateHUD(); showBanner(TH.icon + ' Level 1');
+  gameOn = true; lt = performance.now();
+  raf = requestAnimationFrame(loop);
 }
 
-// ── HUD ──
+// ═══ HUD ═══
 function updateHUD() {
   document.getElementById('hud-score').textContent = score;
+  let st = '';
+  if (streak >= 10) st = '🔥🔥🔥 ' + streak + ' MEGA!';
+  else if (streak >= 5) st = '🔥🔥 ' + streak + ' streak!';
+  else if (streak > 1) st = '🔥 ' + streak;
+  document.getElementById('hud-streak').textContent = st;
+  document.getElementById('hud-angle').textContent = ankleAngle.toFixed(0)+'°';
+  document.getElementById('hud-angle').style.color = ankleAngle>0?'#6bcb77':ankleAngle<-5?'#ff6b6b':'#aaa';
+  document.getElementById('hud-catches').textContent = '🎯 '+caught+'/'+total;
+  const rem = Math.max(0, gameDur - gameTime);
+  document.getElementById('hud-timer').textContent = Math.floor(rem/60)+':'+String(Math.floor(rem%60)).padStart(2,'0');
+  let h=''; for(let i=0;i<maxHP;i++) h += i<health?'❤️':'🖤';
+  document.getElementById('hud-hearts').textContent = h;
 
-  let streakText = '';
-  if (streak >= 10) streakText = '🔥🔥🔥 ' + streak + ' MEGA STREAK!';
-  else if (streak >= 5) streakText = '🔥🔥 ' + streak + ' streak!';
-  else if (streak > 1) streakText = '🔥 ' + streak + ' streak';
-  document.getElementById('hud-streak').textContent = streakText;
-
-  document.getElementById('hud-angle').textContent = ankleAngle.toFixed(0) + '°';
-  document.getElementById('hud-angle').style.color = ankleAngle > 0 ? '#6bcb77' : ankleAngle < -5 ? '#ff6b6b' : '#aaa';
-  document.getElementById('hud-catches').textContent = '🎯 ' + caughtItems + '/' + totalItems;
-
-  const remaining = Math.max(0, gameDuration - gameTime);
-  const min = Math.floor(remaining / 60);
-  const sec = Math.floor(remaining % 60);
-  document.getElementById('hud-timer').textContent = min + ':' + String(sec).padStart(2, '0');
-
-  // Hearts
-  let hearts = '';
-  for (let i = 0; i < maxHealth; i++) {
-    hearts += i < health ? '❤️' : '🖤';
-  }
-  document.getElementById('hud-hearts').textContent = hearts;
+  // Theme-specific bonus info
+  let bonusText = '';
+  if (TK === 'unicorn' && colorChain.count > 1) bonusText = '🌈 Chain: ' + Math.min(colorChain.count,4) + 'x';
+  else if (TK === 'hero') bonusText = '⬆️ Height bonus active';
+  document.getElementById('hud-bonus').textContent = bonusText;
 }
 
-// ══════════════════════
-//  UPDATE
-// ══════════════════════
+function showBanner(t) {
+  const b = document.getElementById('level-banner');
+  b.textContent = t; b.style.color = TH.accent;
+  b.style.opacity = 1; b.style.transform = 'translate(-50%,-50%) scale(1.1)';
+  b.style.transition = 'opacity .7s, transform .7s';
+  setTimeout(() => { b.style.opacity = 0; b.style.transform = 'translate(-50%,-50%) scale(.8)'; }, 1200);
+}
+
+// ═══ UPDATE ═══
 function update(dt) {
-  if (!gameRunning) return;
-
+  if (!gameOn) return;
   gameTime += dt;
-  if (gameTime >= gameDuration) { endGame(); return; }
+  if (gameTime >= gameDur) { endGame(); return; }
 
-  // Compute ankle angle
-  ankleAngle = computeAnkleAngle();
+  ankleAngle = calcAngle();
   if (ankleAngle > maxDF) maxDF = ankleAngle;
   if (ankleAngle < maxPF) maxPF = ankleAngle;
 
-  // Map angle to basket Y
-  const neutralY = H * 0.5;
-  const rangeY = H * 0.38;
-  const targetY = neutralY - (ankleAngle / 35) * rangeY;
-  basket.targetY = Math.max(H * 0.08, Math.min(H * 0.88, targetY));
-  basket.y += (basket.targetY - basket.y) * 8 * dt;
+  const neutralY = H * .5, rangeY = H * .38;
+  plat.targetY = Math.max(H*.06, Math.min(H*.92, neutralY - (ankleAngle/35)*rangeY));
+  plat.y += (plat.targetY - plat.y) * 8 * dt;
 
-  // Angle bar marker
-  const barH = H * 0.7;
-  const markerPct = 0.5 - (ankleAngle / 70);
-  document.getElementById('angle-marker').style.top =
-    Math.max(0, Math.min(barH - 14, markerPct * barH)) + 'px';
+  // Angle bar
+  const barH = H * .7;
+  document.getElementById('angle-marker').style.top = Math.max(0,Math.min(barH-14,(.5-(ankleAngle/70))*barH))+'px';
 
-  // Spawn items
-  const spawnRate = Math.max(0.6, 2.0 - level * 0.15);
+  // Spawn
+  const rate = Math.max(.6, 2.0 - level*.15);
   spawnTimer -= dt;
-  if (spawnTimer <= 0) {
-    spawnItem();
-    spawnTimer = spawnRate + Math.random() * 0.5;
-  }
+  if (spawnTimer <= 0) { spawnTick(); spawnTimer = rate + Math.random()*.5; }
 
-  // Basket bounds
-  const bx = W / 2;
-  const by = basket.y;
-  const bHalfW = basket.width / 2;
-  const bTop = by - basket.height / 2;
-  const bBot = by + basket.height / 2;
+  // Special events
+  specialTimer += dt;
+  if (specialTimer > 18 + Math.random()*8) { specialTimer = 0; triggerSpecial(); }
 
   // Update items
+  const py = plat.y;
   items.forEach(item => {
     if (item.caught || item.missed) return;
 
     // Trail
-    item.trailTimer += dt;
-    if (item.trailTimer > 0.04) {
-      item.trailTimer = 0;
-      item.trail.push({ x: item.x, y: item.y, life: 0.3 });
+    item.trailT += dt;
+    if (item.trailT > .05) {
+      item.trailT = 0;
+      item.trail.push({x:item.x, y:item.y, life:.3});
       if (item.trail.length > 8) item.trail.shift();
     }
     item.trail.forEach(t => t.life -= dt);
     item.trail = item.trail.filter(t => t.life > 0);
 
-    // Move
-    item.y += item.speed * dt;
-    item.x += Math.sin(item.wobble) * item.wobbleAmt * dt;
-    item.wobble += dt * 2.5;
-    item.rotation += item.rotSpeed * dt;
+    // Movement — theme-specific
+    if (item.usePhys) {
+      // Dino physics (gravity + bounce)
+      item.vy += GRAVITY * dt;
+      item.y += item.vy * dt;
+    } else {
+      item.y += item.speed * dt;
+    }
 
-    // Check catch (within basket)
-    if (item.y > bTop - 15 && item.y < bBot + 10 &&
-        item.x > bx - bHalfW - 10 && item.x < bx + bHalfW + 10) {
+    // Horizontal sway
+    item.x += Math.sin(item.sway) * item.swayAmt * dt;
+    item.sway += dt * 2;
+    item.rot += item.rotSpd * dt;
+
+    // Space: curved paths
+    if (TK === 'space' && !item.isHaz) {
+      item.curvePhase += dt * 1.8;
+      item.x += Math.sin(item.curvePhase) * item.curveAmp * dt;
+    }
+
+    // Space: black hole gravity
+    if (blackHole && blackHole.life > 0) {
+      const dx = blackHole.x - item.x, dy = blackHole.y - item.y;
+      const dist = Math.sqrt(dx*dx+dy*dy) || 1;
+      const force = blackHole.strength / Math.max(dist, 50);
+      item.x += dx/dist * force * dt;
+      item.y += dy/dist * force * dt;
+    }
+
+    // Ocean: tide shift
+    if (TK === 'ocean' && tideShift) {
+      item.y += tideShift * dt * .5;
+    }
+
+    // Wind drift (hero)
+    if (item.windDrift) {
+      item.x += item.windDrift * dt;
+    }
+
+    // ── CATCH CHECK (Y-based, full width) ──
+    if (Math.abs(item.y - py) < CATCH_ZONE && item.y > 0) {
       item.caught = true;
 
-      if (item.isHazard) {
-        // ── DAMAGE ──
+      if (item.isHaz) {
+        // DAMAGE
         score = Math.max(0, score + item.pts);
         streak = 0;
         health = Math.max(0, health - 1);
-        damageFlash = 1.0;
-        basketDamageFlash = 1.0;
-        screenShake = 15;
-
-        // Red damage particles
-        spawnParticles(item.x, item.y, '#ff4444', 18, 250);
-        spawnRing(item.x, item.y, '#ff4444');
-
-        // Damage score popup
-        spawnFloatingText(item.x, item.y - 20, item.pts.toString(), '#ff4444', 28);
-        spawnFloatingText(bx, by - 50, '💥 OUCH!', '#ff6b6b', 22);
-
+        dmgFlash = 1; platFlash = 1; screenShake = 15;
+        burst(item.x, item.y, '#ff4444', 18, 250);
+        ring(item.x, item.y, '#ff4444');
+        addText(item.x, item.y-20, ''+item.pts, '#ff4444', 28);
+        addText(W/2, py-50, '💥 OUCH!', '#ff6b6b', 22);
+        if (TK === 'unicorn') colorChain = {color:null,count:0};
       } else {
-        // ── CATCH ──
-        caughtItems++;
+        // CATCH
+        caught++;
         streak++;
         if (streak > bestStreak) bestStreak = streak;
-        const multiplier = Math.min(streak, 5);
-        const pts = item.pts * multiplier;
-        score += pts;
 
-        // Catch animation: item flies into basket
-        startCatchAnimation(item);
+        let mult = Math.min(streak, 5);
+        let pts = item.pts;
 
-        // Delay adding to basket (after animation)
-        setTimeout(() => addToBasket(item.emoji), 200);
-
-        // Green/gold particles
-        const pColor = streak >= 5 ? '#ffd93d' : theme.accent;
-        spawnParticles(item.x, item.y, pColor, 14, 200);
-        spawnRing(item.x, item.y, pColor);
-
-        // Emoji pop
-        spawnEmojiPop(item.x, item.y - 30, item.emoji);
-
-        // Score popup
-        let scoreText = '+' + pts;
-        if (multiplier > 1) scoreText += ' x' + multiplier;
-        const scoreColor = multiplier >= 4 ? '#ffd93d' : (multiplier >= 2 ? '#ffa502' : theme.accent);
-        spawnFloatingText(item.x, item.y - 40, scoreText, scoreColor, multiplier >= 3 ? 30 : 24);
-
-        // Streak milestone popups
-        if (streak === 5) spawnFloatingText(bx, by - 70, '🔥 ON FIRE!', '#ffa502', 26);
-        if (streak === 10) spawnFloatingText(bx, by - 70, '🔥🔥 UNSTOPPABLE!', '#ffd93d', 30);
-
-        // Rare item extra celebration
-        if (item.rare) {
-          spawnParticles(item.x, item.y, '#ffd93d', 25, 300);
-          spawnFloatingText(item.x, item.y - 65, '⭐ RARE!', '#ffd93d', 28);
+        // ── Theme-specific catch logic ──
+        if (TK === 'unicorn' && item.color) {
+          // Color chain
+          if (item.color === colorChain.color || item.color === 'rainbow') {
+            colorChain.count++;
+          } else {
+            colorChain = { color: item.color, count: 1 };
+          }
+          const chainMult = Math.min(colorChain.count, 4);
+          mult = Math.max(mult, chainMult);
+          if (chainMult >= 3) addText(item.x, item.y-60, '🌈 ×'+chainMult, TH.colorMap[item.color]||'#fff', 26);
         }
 
-        // Health regen on streak milestones
-        if (streak === 10 && health < maxHealth) {
-          health = Math.min(maxHealth, health + 1);
-          spawnFloatingText(bx, by - 90, '❤️ +1 HP!', '#ff6b6b', 22);
+        if (TK === 'hero') {
+          // Height bonus: higher catch = more points
+          const heightRatio = 1 - (py / H); // 1 at top, 0 at bottom
+          const heightMult = 1 + heightRatio * 2.5; // 1x to 3.5x
+          pts = Math.round(pts * heightMult);
+          if (heightRatio > .6) addText(item.x, item.y-60, '⬆️ HEIGHT BONUS!', '#ffd93d', 22);
+        }
+
+        if (TK === 'zoo' && item.pairId) {
+          if (!pairState[item.pairId]) pairState[item.pairId] = { caught: 0 };
+          pairState[item.pairId].caught++;
+          if (pairState[item.pairId].caught >= 2) {
+            mult = Math.max(mult, 3);
+            addText(item.x, item.y-65, '👩‍👧 PAIR BONUS!', '#6bcb77', 26);
+            burst(item.x, item.y, '#6bcb77', 20, 250);
+          }
+        }
+
+        if (TK === 'ocean' && item.schoolId != null) {
+          const sg = schoolGroups[item.schoolId];
+          if (sg) {
+            sg.caught++;
+            if (sg.caught >= sg.total && !sg.done) {
+              sg.done = true;
+              const schoolBonus = sg.total * 15;
+              score += schoolBonus;
+              addText(item.x, item.y-65, '🐟 SCHOOL BONUS +'+schoolBonus+'!', '#0abde3', 26);
+              burst(item.x, item.y, '#0abde3', 25, 300);
+              ring(item.x, item.y, '#0abde3');
+            }
+          }
+        }
+
+        const finalPts = pts * mult;
+        score += finalPts;
+
+        // VFX
+        const pColor = streak >= 5 ? '#ffd93d' : TH.accent;
+        burst(item.x, item.y, pColor, 14, 200);
+        ring(item.x, item.y, pColor);
+        emojiPop(item.x, item.y-30, item.e);
+
+        let scoreStr = '+' + finalPts;
+        if (mult > 1) scoreStr += ' ×' + mult;
+        addText(item.x, item.y-40, scoreStr, mult>=4?'#ffd93d':mult>=2?'#ffa502':TH.accent, mult>=3?30:24);
+
+        if (streak === 5) addText(W/2, py-70, '🔥 ON FIRE!', '#ffa502', 26);
+        if (streak === 10) { addText(W/2, py-70, '🔥🔥 UNSTOPPABLE!', '#ffd93d', 30); if(health<maxHP){health++;addText(W/2,py-90,'❤️ +1 HP!','#ff6b6b',22);} }
+        if (item.rare) { burst(item.x,item.y,'#ffd93d',25,300); addText(item.x,item.y-65,'⭐ RARE!','#ffd93d',28); }
+
+        // Add to collected visual
+        collected.push({ e:item.e, x:item.x, age:0, bounce:1 });
+        if (collected.length > 8) collected.shift();
+
+        // Hero: bounce animation
+        if (TK === 'hero') {
+          emojiPop(item.x, py-60, item.e);
+          // Extra upward particles to show "bounce to safety"
+          for(let i=0;i<5;i++) particles.push({x:item.x+(Math.random()-.5)*30,y:py-20,vx:(Math.random()-.5)*50,vy:-200-Math.random()*100,life:.7,max:.7,r:3,color:'#ffd93d'});
         }
       }
     }
 
-    // Missed (fell off bottom)
-    if (item.y > H + 20 && !item.caught) {
-      item.missed = true;
-      if (!item.isHazard) {
-        missedItems++;
-        streak = 0;
-        spawnGroundSplat(item.x, item.emoji);
+    // ── MISS CHECK ──
+    if (item.y > H + 30 && !item.caught) {
+      if (TK === 'dino' && item.usePhys && item.bounces < (TH.bounceMax||3) && !item.isHaz) {
+        // Bounce!
+        item.bounces++;
+        item.crackLvl++;
+        item.y = H - 5;
+        item.vy = -(200 + Math.random()*100) * Math.pow(.7, item.bounces);
+        item.size = Math.max(20, item.size - 4); // shrink each bounce
+        burst(item.x, H-10, '#ff9f43', 6, 100);
+        addText(item.x, H-40, 'Bounce '+ item.bounces +'!', '#ff9f43', 18);
+      } else {
+        item.missed = true;
+        if (!item.isHaz) {
+          missed++;
+          streak = 0;
+          if (TK === 'unicorn') colorChain = {color:null,count:0};
+          addSplat(item.x, item.e);
+        }
       }
+    }
+    // Also miss if goes above screen (eruption items that weren't caught)
+    if (item.y < -100 && item.usePhys && item.vy < 0 && !item.caught) {
+      // Let it come back down naturally
     }
   });
 
-  // Prune caught/missed items
   items = items.filter(i => !i.caught && !i.missed);
 
-  // Update catch animations
-  catchAnimations.forEach(a => a.time += dt);
-  catchAnimations = catchAnimations.filter(a => a.time < a.duration);
+  // Update black hole
+  if (blackHole) { blackHole.life -= dt; if (blackHole.life <= 0) blackHole = null; }
 
-  // Update floating texts
-  floatingTexts.forEach(ft => {
-    ft.y += ft.vy * dt;
-    ft.vy *= 0.96;
-    ft.life -= dt;
-    ft.scale = Math.max(1, ft.scale - dt * 1.5);
-  });
-  floatingTexts = floatingTexts.filter(ft => ft.life > 0);
+  // Update texts
+  texts.forEach(t => { t.y += t.vy*dt; t.vy *= .96; t.life -= dt; t.scale = Math.max(1, t.scale-dt*1.5); });
+  texts = texts.filter(t => t.life > 0);
 
   // Update particles
   particles.forEach(p => {
-    if (p.isRing) {
-      p.life -= dt;
-      p.ringRadius += (p.ringMaxRadius - p.ringRadius) * 5 * dt;
-    } else if (p.color === 'emoji') {
-      p.y += p.vy * dt;
-      p.x += p.vx * dt;
-      p.vy += 30 * dt;
-      p.life -= dt;
-      p.scale = Math.max(0.3, p.life / p.maxLife * p.scale);
-    } else {
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vy += 150 * dt;
-      p.life -= dt;
-    }
+    if (p.isRing) { p.life -= dt; p.rr += (p.rrMax-p.rr)*5*dt; }
+    else if (p.color==='emoji') { p.y+=p.vy*dt;p.x+=p.vx*dt;p.vy+=30*dt;p.life-=dt;p.scale=Math.max(.3,p.life/p.max*p.scale); }
+    else { p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=150*dt;p.life-=dt; }
   });
   particles = particles.filter(p => p.life > 0);
 
-  // Update ground splats
-  groundSplats.forEach(s => {
-    s.life -= dt;
-    s.squash = Math.min(1, s.squash + dt * 8);
-  });
-  groundSplats = groundSplats.filter(s => s.life > 0);
+  // Update splats
+  splats.forEach(s => { s.life-=dt; s.sq=Math.min(1,s.sq+dt*8); });
+  splats = splats.filter(s => s.life > 0);
 
-  // Update collected items bob
-  collectedInBasket.forEach(c => {
-    c.age += dt;
-    c.bounceIn = Math.max(0, c.bounceIn - dt * 4);
-  });
+  // Update collected display
+  collected.forEach(c => { c.age += dt; c.bounce = Math.max(0, c.bounce - dt*4); });
 
-  // Damage flash decay
-  if (damageFlash > 0) damageFlash = Math.max(0, damageFlash - dt * 3);
-  if (basketDamageFlash > 0) basketDamageFlash = Math.max(0, basketDamageFlash - dt * 4);
+  // Damage flash
+  if (dmgFlash > 0) dmgFlash = Math.max(0, dmgFlash - dt*3);
+  if (platFlash > 0) platFlash = Math.max(0, platFlash - dt*4);
+  if (screenShake > 0) { screenShake *= .88; if (screenShake<.3) screenShake=0; }
 
-  // BG particles
-  bgParticles.forEach(p => {
-    p.y += p.speed * dt;
-    if (p.y > H + 10) { p.y = -10; p.x = Math.random() * W; }
-  });
-
-  // Level up
-  levelTimer += dt;
-  if (levelTimer > 25) {
-    levelTimer = 0;
-    level++;
-    showBanner(theme.icon + ' Level ' + level);
-  }
-
-  // Screen shake decay
-  if (screenShake > 0) screenShake *= 0.88;
-  if (screenShake < 0.3) screenShake = 0;
+  // Level
+  lvlTimer += dt;
+  if (lvlTimer > 25) { lvlTimer = 0; level++; showBanner(TH.icon+' Level '+level); }
 
   updateHUD();
 }
 
-// ══════════════════════
-//  DRAW
-// ══════════════════════
+// ═══ DRAW ═══
 function draw() {
-  ctx.save();
+  X.save();
+  if (screenShake > 0) X.translate((Math.random()-.5)*screenShake*2,(Math.random()-.5)*screenShake*2);
 
-  // Screen shake
-  if (screenShake > 0) {
-    ctx.translate(
-      (Math.random() - 0.5) * screenShake * 2,
-      (Math.random() - 0.5) * screenShake * 2
-    );
-  }
+  // Background
+  const grad = X.createLinearGradient(0,0,0,H);
+  (TH.skyColors||['#1a1a2e','#16213e']).forEach((c,i,a) => grad.addColorStop(i/(a.length-1),c));
+  X.fillStyle = grad; X.fillRect(-20,-20,W+40,H+40);
 
-  // ── Background gradient ──
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  if (theme) {
-    const sky = theme.skyColors || ['#1a1a2e', '#16213e', '#0f3460'];
-    sky.forEach((c, i) => grad.addColorStop(i / (sky.length - 1), c));
-  } else {
-    grad.addColorStop(0, '#1a1a2e');
-    grad.addColorStop(1, '#16213e');
-  }
-  ctx.fillStyle = grad;
-  ctx.fillRect(-20, -20, W + 40, H + 40);
+  // BG decoration per theme
+  drawBgDecor();
 
-  // ── BG particles ──
-  bgParticles.forEach(p => {
-    ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fill();
+  // Ground splats
+  splats.forEach(s => {
+    X.save(); X.globalAlpha = s.life/s.max*.7;
+    X.translate(s.x, s.y); X.scale(1+s.sq*.6, Math.max(.2,1-s.sq*.7));
+    X.font = '28px serif'; X.textAlign = 'center'; X.textBaseline = 'middle';
+    X.fillText(s.emoji, 0, 0); X.restore();
   });
 
-  // ── Zone indicators ──
-  ctx.fillStyle = 'rgba(107, 203, 119, 0.03)';
-  ctx.fillRect(0, 0, W, H * 0.35);
-  ctx.fillStyle = 'rgba(255, 107, 107, 0.03)';
-  ctx.fillRect(0, H * 0.65, W, H * 0.35);
-
-  // Neutral line
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-  ctx.setLineDash([8, 8]);
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, H * 0.5);
-  ctx.lineTo(W, H * 0.5);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // ── Ground splats ──
-  groundSplats.forEach(s => {
-    const alpha = s.life / s.maxLife;
-    ctx.save();
-    ctx.globalAlpha = alpha * 0.7;
-    ctx.translate(s.x, s.y);
-    // Squash the emoji flat
-    ctx.scale(1 + s.squash * 0.6, Math.max(0.2, 1 - s.squash * 0.7));
-    ctx.font = '28px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(s.emoji, 0, 0);
-    ctx.restore();
-  });
-
-  // ── Item trails ──
+  // Item trails
   items.forEach(item => {
     if (item.caught || item.missed) return;
     item.trail.forEach(t => {
-      const alpha = (t.life / 0.3) * 0.3;
-      ctx.globalAlpha = alpha;
-      if (item.isHazard) {
-        ctx.fillStyle = '#ff4444';
-      } else if (item.rare) {
-        ctx.fillStyle = '#ffd93d';
-      } else {
-        ctx.fillStyle = theme.accent;
-      }
-      ctx.beginPath();
-      ctx.arc(t.x, t.y, 4, 0, Math.PI * 2);
-      ctx.fill();
+      X.globalAlpha = (t.life/.3)*.3;
+      X.fillStyle = item.isHaz ? '#ff4444' : item.rare ? '#ffd93d' : TH.accent;
+      X.beginPath(); X.arc(t.x, t.y, 4, 0, Math.PI*2); X.fill();
     });
-    ctx.globalAlpha = 1;
+    X.globalAlpha = 1;
   });
 
-  // ── Falling items ──
+  // Falling items
   items.forEach(item => {
     if (item.caught || item.missed) return;
-    ctx.save();
-    ctx.translate(item.x, item.y);
-    ctx.rotate(item.rotation);
+    X.save(); X.translate(item.x, item.y); X.rotate(item.rot);
 
-    // Glow effect
-    if (item.rare) {
-      ctx.shadowColor = '#ffd93d';
-      ctx.shadowBlur = 30;
-      // Extra glow circle
-      ctx.fillStyle = 'rgba(255,217,61,0.15)';
-      ctx.beginPath();
-      ctx.arc(0, 0, item.size * 0.8, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (item.isHazard) {
-      ctx.shadowColor = '#ff4444';
-      ctx.shadowBlur = 20;
-      // Danger glow
-      ctx.fillStyle = 'rgba(255,68,68,0.12)';
-      ctx.beginPath();
-      ctx.arc(0, 0, item.size * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.shadowColor = theme.accent;
-      ctx.shadowBlur = 12;
+    // Glow
+    if (item.rare) { X.shadowColor='#ffd93d'; X.shadowBlur=30; X.fillStyle='rgba(255,217,61,.15)'; X.beginPath(); X.arc(0,0,item.size*.8,0,Math.PI*2); X.fill(); }
+    else if (item.isHaz) { X.shadowColor='#ff4444'; X.shadowBlur=20; X.fillStyle='rgba(255,68,68,.12)'; X.beginPath(); X.arc(0,0,item.size*.7,0,Math.PI*2); X.fill(); }
+    else { X.shadowColor=TH.accent; X.shadowBlur=12; }
+
+    // Dino crack overlay
+    if (TK === 'dino' && item.crackLvl > 0 && !item.isHaz) {
+      X.globalAlpha = .4 + item.crackLvl*.15;
     }
 
-    ctx.font = item.size + 'px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(item.emoji, 0, 0);
-    ctx.shadowBlur = 0;
-    ctx.restore();
+    X.font = item.size + 'px serif'; X.textAlign='center'; X.textBaseline='middle';
+    X.fillText(item.e, 0, 0);
+
+    // Crack lines for dino
+    if (TK === 'dino' && item.crackLvl > 0 && !item.isHaz) {
+      X.shadowBlur = 0; X.strokeStyle = 'rgba(255,255,255,.6)'; X.lineWidth = 2;
+      for (let c = 0; c < item.crackLvl; c++) {
+        X.beginPath(); X.moveTo(-5+c*4, -8+c*3); X.lineTo(3+c*2, 5-c*2); X.stroke();
+      }
+      X.globalAlpha = 1;
+    }
+
+    X.shadowBlur = 0; X.restore();
   });
 
-  // ── Catch animations (items flying toward basket) ──
-  const bx = W / 2;
-  const by = basket.y;
-  catchAnimations.forEach(a => {
-    const t = a.time / a.duration;
-    const ease = t * t; // ease-in
-    const x = a.fromX + (bx - a.fromX) * ease;
-    const y = a.fromY + (by - a.fromY) * ease;
-    const s = a.size * (1 - ease * 0.6);
-    ctx.globalAlpha = 1 - ease * 0.3;
-    ctx.font = Math.max(8, s) + 'px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(a.emoji, x, y);
-    ctx.globalAlpha = 1;
-  });
+  // Black hole (space)
+  if (blackHole && blackHole.life > 0) {
+    const a = blackHole.life / blackHole.max;
+    X.save(); X.globalAlpha = a;
+    // Swirling dark circle
+    const rg = X.createRadialGradient(blackHole.x, blackHole.y, 5, blackHole.x, blackHole.y, 60);
+    rg.addColorStop(0, 'rgba(0,0,0,.9)');
+    rg.addColorStop(.5, 'rgba(75,0,130,.5)');
+    rg.addColorStop(1, 'rgba(75,0,130,0)');
+    X.fillStyle = rg; X.beginPath(); X.arc(blackHole.x, blackHole.y, 60, 0, Math.PI*2); X.fill();
+    // Accretion ring
+    X.strokeStyle = '#ffd93d'; X.lineWidth = 2;
+    X.beginPath(); X.ellipse(blackHole.x, blackHole.y, 50, 20, gameTime*2, 0, Math.PI*2); X.stroke();
+    X.restore();
+  }
 
-  // ── BASKET / BUCKET ──
-  drawBasket(bx, by);
+  // ── PLATFORM ──
+  drawPlatform();
 
-  // ── Particles ──
+  // Particles
   particles.forEach(p => {
-    if (p.isRing) {
-      const alpha = p.life / p.maxLife;
-      ctx.globalAlpha = alpha * 0.6;
-      ctx.strokeStyle = p.color;
-      ctx.lineWidth = 3 * alpha;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.ringRadius, 0, Math.PI * 2);
-      ctx.stroke();
-    } else if (p.color === 'emoji') {
-      ctx.globalAlpha = p.life / p.maxLife;
-      ctx.font = Math.max(8, 30 * (p.life / p.maxLife)) + 'px serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(p.emoji, p.x, p.y);
-    } else {
-      const alpha = p.life / p.maxLife;
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r * (0.5 + alpha * 0.5), 0, Math.PI * 2);
-      ctx.fill();
+    if (p.isRing) { X.globalAlpha=p.life/p.max*.6; X.strokeStyle=p.color; X.lineWidth=3*(p.life/p.max); X.beginPath(); X.arc(p.x,p.y,p.rr,0,Math.PI*2); X.stroke(); }
+    else if (p.color==='emoji') { X.globalAlpha=p.life/p.max; X.font=Math.max(8,30*(p.life/p.max))+'px serif'; X.textAlign='center'; X.textBaseline='middle'; X.fillText(p.emoji,p.x,p.y); }
+    else { const a=p.life/p.max; X.globalAlpha=a; X.fillStyle=p.color; X.beginPath(); X.arc(p.x,p.y,p.r*(.5+a*.5),0,Math.PI*2); X.fill(); }
+  });
+  X.globalAlpha = 1;
+
+  // Floating texts
+  texts.forEach(t => {
+    X.globalAlpha = Math.min(1, t.life/(t.max*.3));
+    X.save(); X.translate(t.x, t.y); X.scale(t.scale, t.scale);
+    X.font = '700 '+t.size+'px Fredoka,sans-serif'; X.textAlign='center'; X.textBaseline='middle';
+    X.strokeStyle = 'rgba(0,0,0,.7)'; X.lineWidth = 4; X.lineJoin = 'round';
+    X.strokeText(t.text, 0, 0);
+    X.fillStyle = t.color; X.fillText(t.text, 0, 0);
+    X.restore(); X.globalAlpha = 1;
+  });
+
+  // Damage flash overlay
+  if (dmgFlash > 0) {
+    X.fillStyle = `rgba(255,0,0,${dmgFlash*.35})`; X.fillRect(-20,-20,W+40,H+40);
+    const vg = X.createRadialGradient(W/2,H/2,W*.2,W/2,H/2,W*.7);
+    vg.addColorStop(0,'rgba(255,0,0,0)'); vg.addColorStop(1,`rgba(180,0,0,${dmgFlash*.5})`);
+    X.fillStyle = vg; X.fillRect(-20,-20,W+40,H+40);
+  }
+
+  X.restore();
+}
+
+// ── Background decorations ──
+function drawBgDecor() {
+  // Subtle floating dots
+  const t = gameTime;
+  X.globalAlpha = .15;
+  for (let i = 0; i < 20; i++) {
+    const px = (i*137.5 + t*8*(i%3+1)) % (W+40) - 20;
+    const py = (i*97.3 + t*5*(i%2+1)) % (H+40) - 20;
+    X.fillStyle = '#fff';
+    X.beginPath(); X.arc(px, py, 1+i%3, 0, Math.PI*2); X.fill();
+  }
+
+  if (TK === 'ocean') {
+    // Bubbles rising
+    X.fillStyle = 'rgba(120,200,255,.15)';
+    for (let i=0;i<12;i++) {
+      const bx = (i*73+t*20*(i%3+1))%W;
+      const by = H - ((t*30*(i%4+1)+i*100)%H);
+      X.beginPath(); X.arc(bx, by, 3+i%4, 0, Math.PI*2); X.fill();
     }
-  });
-  ctx.globalAlpha = 1;
-
-  // ── Floating texts (score popups) ──
-  floatingTexts.forEach(ft => {
-    const alpha = Math.min(1, ft.life / (ft.maxLife * 0.3));
-    ctx.globalAlpha = alpha;
-    ctx.save();
-    ctx.translate(ft.x, ft.y);
-    ctx.scale(ft.scale, ft.scale);
-
-    // Text shadow/outline
-    ctx.font = '700 ' + ft.size + 'px Fredoka, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Outline
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-    ctx.lineWidth = 4;
-    ctx.lineJoin = 'round';
-    ctx.strokeText(ft.text, 0, 0);
-
-    // Fill
-    ctx.fillStyle = ft.color;
-    ctx.fillText(ft.text, 0, 0);
-
-    ctx.restore();
-    ctx.globalAlpha = 1;
-  });
-
-  // ── Direction labels ──
-  ctx.fillStyle = 'rgba(107, 203, 119, 0.25)';
-  ctx.font = '600 0.65rem Fredoka, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('↑ TOES UP', 8, H * 0.12);
-  ctx.fillStyle = 'rgba(255, 159, 67, 0.25)';
-  ctx.fillText('↓ TOES DOWN', 8, H * 0.9);
-
-  // ── DAMAGE FLASH OVERLAY ──
-  if (damageFlash > 0) {
-    ctx.fillStyle = `rgba(255, 0, 0, ${damageFlash * 0.35})`;
-    ctx.fillRect(-20, -20, W + 40, H + 40);
-
-    // Vignette-style damage: darker at edges
-    const vGrad = ctx.createRadialGradient(W/2, H/2, W * 0.2, W/2, H/2, W * 0.7);
-    vGrad.addColorStop(0, 'rgba(255,0,0,0)');
-    vGrad.addColorStop(1, `rgba(180,0,0,${damageFlash * 0.5})`);
-    ctx.fillStyle = vGrad;
-    ctx.fillRect(-20, -20, W + 40, H + 40);
+  } else if (TK === 'space') {
+    // Twinkling stars
+    for (let i=0;i<30;i++) {
+      const sx=(i*173.7)%(W-10)+5, sy=(i*241.3)%(H-10)+5;
+      const twinkle = .2 + Math.sin(t*2+i)*.3;
+      X.globalAlpha = twinkle;
+      X.fillStyle = i%5===0?'#ffd93d':'#fff';
+      X.beginPath(); X.arc(sx,sy,1+i%2,0,Math.PI*2); X.fill();
+    }
+  } else if (TK === 'hero') {
+    // City skyline silhouette
+    X.globalAlpha = .08; X.fillStyle = '#fff';
+    const bw = 30;
+    for (let i=0; i<Math.ceil(W/bw)+1; i++) {
+      const bh = 60 + ((i*47)%120);
+      X.fillRect(i*bw, H-bh, bw-4, bh);
+      // Windows
+      X.fillStyle = 'rgba(255,200,50,.15)';
+      for (let wy = H-bh+10; wy < H-10; wy += 20) {
+        for (let wx = i*bw+4; wx < i*bw+bw-8; wx += 10) {
+          if (Math.sin(wx*wy+t)>.3) X.fillRect(wx,wy,5,8);
+        }
+      }
+      X.fillStyle = 'rgba(255,255,255,.08)';
+    }
   }
-
-  ctx.restore();
+  X.globalAlpha = 1;
 }
 
-// ── Draw the basket/bucket ──
-function drawBasket(cx, cy) {
-  const bw = basket.width;
-  const bh = basket.height;
+// ── Platform drawing per theme ──
+function drawPlatform() {
+  const py = plat.y;
+  const pw = W * .8; // platform visual width
+  const cx = W / 2;
+  const dmg = platFlash > 0;
 
-  ctx.save();
+  X.save();
 
-  // Damage flash on basket
-  const dmgTint = basketDamageFlash > 0;
+  // ── Catch zone glow (extends full width) ──
+  const czGrad = X.createLinearGradient(0, py-CATCH_ZONE-10, 0, py+CATCH_ZONE+10);
+  czGrad.addColorStop(0, 'rgba(255,255,255,0)');
+  czGrad.addColorStop(.3, `rgba(${dmg?'255,50,50':'255,255,255'},.04)`);
+  czGrad.addColorStop(.5, `rgba(${dmg?'255,50,50':'255,255,255'},.07)`);
+  czGrad.addColorStop(.7, `rgba(${dmg?'255,50,50':'255,255,255'},.04)`);
+  czGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  X.fillStyle = czGrad;
+  X.fillRect(0, py-CATCH_ZONE-10, W, CATCH_ZONE*2+20);
 
-  // ── Bucket shape (trapezoid) ──
-  const topW = bw * 0.55;
-  const botW = bw * 0.4;
-  const bucketTop = cy - bh * 0.25;
-  const bucketBot = cy + bh * 0.35;
-  const rimY = bucketTop - 4;
+  // ── Per-theme platform visual ──
+  if (TK === 'zoo') drawPlatZoo(cx, py, pw, dmg);
+  else if (TK === 'dino') drawPlatDino(cx, py, pw, dmg);
+  else if (TK === 'ocean') drawPlatOcean(cx, py, pw, dmg);
+  else if (TK === 'space') drawPlatSpace(cx, py, pw, dmg);
+  else if (TK === 'unicorn') drawPlatRainbow(cx, py, pw, dmg);
+  else if (TK === 'hero') drawPlatTrampoline(cx, py, pw, dmg);
 
-  // Bucket body gradient
-  const bucketGrad = ctx.createLinearGradient(cx - topW, 0, cx + topW, 0);
-  if (dmgTint) {
-    bucketGrad.addColorStop(0, '#cc2222');
-    bucketGrad.addColorStop(0.5, '#ff4444');
-    bucketGrad.addColorStop(1, '#cc2222');
-  } else {
-    bucketGrad.addColorStop(0, theme.bucketColor);
-    bucketGrad.addColorStop(0.5, theme.bucketHighlight);
-    bucketGrad.addColorStop(1, theme.bucketColor);
-  }
-
-  // Glow under bucket
-  ctx.shadowColor = dmgTint ? '#ff0000' : theme.accent;
-  ctx.shadowBlur = dmgTint ? 30 : 20;
-
-  // Bucket body
-  ctx.fillStyle = bucketGrad;
-  ctx.beginPath();
-  ctx.moveTo(cx - topW, rimY);
-  ctx.lineTo(cx + topW, rimY);
-  ctx.lineTo(cx + botW, bucketBot);
-  ctx.lineTo(cx - botW, bucketBot);
-  ctx.closePath();
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // Bucket rim (top edge, slightly wider)
-  const rimW = topW + 6;
-  ctx.fillStyle = dmgTint ? '#ff6666' : theme.bucketHighlight;
-  ctx.beginPath();
-  ctx.ellipse(cx, rimY, rimW, 8, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Bucket inner shadow (dark ellipse at rim)
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.beginPath();
-  ctx.ellipse(cx, rimY + 3, topW - 4, 5, 0, 0, Math.PI);
-  ctx.fill();
-
-  // ── Highlight stripe on bucket ──
-  ctx.strokeStyle = `rgba(255,255,255,${dmgTint ? 0.3 : 0.12})`;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(cx - topW * 0.3, rimY + 4);
-  ctx.lineTo(cx - botW * 0.3, bucketBot - 4);
-  ctx.stroke();
-
-  // ── Basket emoji label (above bucket) ──
-  ctx.font = '22px serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(theme.basketEmoji, cx, rimY - 16);
-
-  // ── Collected items inside the bucket ──
-  if (collectedInBasket.length > 0) {
-    const innerTop = rimY + 6;
-    const innerH = bucketBot - innerTop - 6;
-    const innerW = topW * 1.4;
-
-    collectedInBasket.forEach((c, i) => {
-      const t = i / Math.max(1, collectedInBasket.length - 1);
-      // Arrange in rows within the bucket
-      const row = Math.floor(i / 3);
-      const col = i % 3;
-      const rowY = innerTop + 8 + row * 16;
-      const rowX = cx + (col - 1) * 18 + c.offsetX * 0.3;
-
-      // Bounce-in effect
-      const bounce = c.bounceIn > 0 ? Math.sin(c.bounceIn * Math.PI * 3) * 6 : 0;
-
-      // Gentle bob
-      const bob = Math.sin(c.bobPhase + c.age * 1.5) * 1.5;
-
-      ctx.globalAlpha = 0.9;
-      ctx.font = '16px serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(c.emoji, rowX, rowY + bob - bounce);
+  // ── Collected items on platform ──
+  if (collected.length > 0) {
+    const startX = cx - (collected.length-1)*14;
+    collected.forEach((c, i) => {
+      const ix = startX + i*28;
+      const bounce = c.bounce > 0 ? Math.sin(c.bounce*Math.PI*3)*8 : 0;
+      X.globalAlpha = .85;
+      X.font = '18px serif'; X.textAlign='center'; X.textBaseline='middle';
+      X.fillText(c.e, ix, py-25-bounce);
     });
-    ctx.globalAlpha = 1;
+    X.globalAlpha = 1;
   }
 
-  // ── Collection counter on bucket ──
-  if (caughtItems > 0) {
-    const countX = cx + topW + 14;
-    const countY = rimY;
-    // Badge
-    ctx.fillStyle = theme.accent;
-    ctx.beginPath();
-    ctx.arc(countX, countY, 14, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = '700 11px Fredoka, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(caughtItems, countX, countY);
-  }
-
-  // ── Catch zone guide lines ──
-  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 6]);
-  ctx.beginPath();
-  ctx.moveTo(cx - bw, cy);
-  ctx.lineTo(20, cy);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(cx + bw, cy);
-  ctx.lineTo(W - 30, cy);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  ctx.restore();
+  X.restore();
 }
 
-// ── Game Loop ──
-function gameLoop(ts) {
-  const dt = Math.min((ts - lastTime) / 1000, 0.05);
-  lastTime = ts;
+function drawPlatZoo(cx, py, pw, dmg) {
+  // Wide net with rope pattern
+  const c1 = dmg ? '#cc3333' : TH.platColor;
+  const c2 = dmg ? '#ff5555' : TH.platHighlight;
+  X.shadowColor = dmg?'#ff0000':TH.accent; X.shadowBlur = 15;
+
+  // Net background
+  X.fillStyle = `rgba(${dmg?'200,50,50':'45,122,39'},.3)`;
+  X.beginPath(); X.roundRect(cx-pw/2, py-8, pw, 16, 8); X.fill();
+
+  // Rope lines
+  X.shadowBlur = 0;
+  X.strokeStyle = c1; X.lineWidth = 3;
+  X.beginPath(); X.moveTo(cx-pw/2, py-6); X.lineTo(cx+pw/2, py-6); X.stroke();
+  X.beginPath(); X.moveTo(cx-pw/2, py+6); X.lineTo(cx+pw/2, py+6); X.stroke();
+  // Cross hatching
+  X.strokeStyle = c2; X.lineWidth = 1.5;
+  for (let i = cx-pw/2; i < cx+pw/2; i += 18) {
+    X.beginPath(); X.moveTo(i, py-8); X.lineTo(i+12, py+8); X.stroke();
+  }
+  // Knot ends
+  X.fillStyle = c1;
+  X.beginPath(); X.arc(cx-pw/2, py, 6, 0, Math.PI*2); X.fill();
+  X.beginPath(); X.arc(cx+pw/2, py, 6, 0, Math.PI*2); X.fill();
+}
+
+function drawPlatDino(cx, py, pw, dmg) {
+  // Rocky ledge with ferns
+  const c = dmg ? '#cc3333' : TH.platColor;
+  X.shadowColor = dmg?'#ff0000':TH.accent; X.shadowBlur = 12;
+
+  // Jagged rock shape
+  X.fillStyle = c;
+  X.beginPath();
+  X.moveTo(cx-pw/2-5, py+10);
+  for (let i = 0; i <= 20; i++) {
+    const xp = cx-pw/2 + (pw/20)*i;
+    const yp = py - 4 + Math.sin(i*1.3)*4 + (i%3===0?-3:0);
+    X.lineTo(xp, yp);
+  }
+  X.lineTo(cx+pw/2+5, py+10);
+  X.closePath(); X.fill();
+  X.shadowBlur = 0;
+
+  // Highlight edge
+  X.strokeStyle = dmg?'#ff6666':TH.platHighlight; X.lineWidth = 2;
+  X.beginPath();
+  for (let i = 0; i <= 20; i++) {
+    const xp = cx-pw/2 + (pw/20)*i;
+    const yp = py - 6 + Math.sin(i*1.3)*4 + (i%3===0?-3:0);
+    i===0 ? X.moveTo(xp,yp) : X.lineTo(xp,yp);
+  }
+  X.stroke();
+
+  // Ferns
+  X.font = '14px serif'; X.textAlign='center';
+  X.fillText('🌿', cx-pw/2+15, py-12);
+  X.fillText('🌿', cx+pw/2-15, py-12);
+}
+
+function drawPlatOcean(cx, py, pw, dmg) {
+  // Fishing net with cork floats
+  const c = dmg ? '#cc3333' : TH.platColor;
+  X.shadowColor = dmg?'#ff0000':TH.accent; X.shadowBlur = 15;
+
+  // Net body (wavy)
+  X.fillStyle = `rgba(${dmg?'200,50,50':'21,101,192'},.35)`;
+  X.beginPath(); X.moveTo(cx-pw/2, py-6);
+  for (let i = 0; i <= pw; i += 10) {
+    X.lineTo(cx-pw/2+i, py-6+Math.sin(i*.1+gameTime*3)*3);
+  }
+  for (let i = pw; i >= 0; i -= 10) {
+    X.lineTo(cx-pw/2+i, py+6+Math.sin(i*.1+gameTime*3)*3);
+  }
+  X.closePath(); X.fill();
+  X.shadowBlur = 0;
+
+  // Rope lines
+  X.strokeStyle = '#42A5F5'; X.lineWidth = 2;
+  X.beginPath();
+  for (let i = 0; i <= pw; i += 8) {
+    const xp = cx-pw/2+i, yp = py+Math.sin(i*.12+gameTime*3)*3;
+    i===0?X.moveTo(xp,yp):X.lineTo(xp,yp);
+  }
+  X.stroke();
+
+  // Cork floats
+  X.fillStyle = dmg?'#ff8844':'#D2691E';
+  for (let i = 0; i < 5; i++) {
+    const fx = cx-pw/2 + (pw/(4))*(i) ;
+    X.beginPath(); X.ellipse(fx, py, 6, 8, 0, 0, Math.PI*2); X.fill();
+  }
+}
+
+function drawPlatSpace(cx, py, pw, dmg) {
+  // Tractor beam — glowing energy line
+  const c = dmg ? '#ff3333' : TH.accent;
+  X.shadowColor = c; X.shadowBlur = 30;
+
+  // Energy beam
+  const bg = X.createLinearGradient(cx-pw/2, 0, cx+pw/2, 0);
+  bg.addColorStop(0, 'rgba(255,217,61,0)');
+  bg.addColorStop(.3, dmg?'rgba(255,50,50,.4)':'rgba(255,217,61,.35)');
+  bg.addColorStop(.5, dmg?'rgba(255,80,80,.6)':'rgba(255,217,61,.5)');
+  bg.addColorStop(.7, dmg?'rgba(255,50,50,.4)':'rgba(255,217,61,.35)');
+  bg.addColorStop(1, 'rgba(255,217,61,0)');
+  X.fillStyle = bg;
+  X.fillRect(cx-pw/2, py-5, pw, 10);
+  X.shadowBlur = 0;
+
+  // Pulsing energy nodes
+  const pulse = Math.sin(gameTime * 4) * .3 + .7;
+  X.fillStyle = c;
+  for (let i = 0; i < 8; i++) {
+    const nx = cx - pw/2 + (pw/7)*i;
+    X.globalAlpha = pulse * (dmg ? 1 : .8);
+    X.beginPath(); X.arc(nx, py, 3+Math.sin(gameTime*3+i)*1.5, 0, Math.PI*2); X.fill();
+  }
+  X.globalAlpha = 1;
+
+  // UFO at center
+  X.font = '22px serif'; X.textAlign='center'; X.textBaseline='middle';
+  X.fillText('🛸', cx, py-16);
+}
+
+function drawPlatRainbow(cx, py, pw, dmg) {
+  // Rainbow cloud platform
+  X.shadowColor = dmg?'#ff0000':TH.accent; X.shadowBlur = 20;
+
+  if (dmg) {
+    X.fillStyle = 'rgba(255,50,50,.4)';
+    X.beginPath(); X.roundRect(cx-pw/2, py-10, pw, 20, 10); X.fill();
+  } else {
+    // Rainbow gradient bar
+    const rb = X.createLinearGradient(cx-pw/2, 0, cx+pw/2, 0);
+    rb.addColorStop(0, 'rgba(255,107,107,.4)');
+    rb.addColorStop(.17, 'rgba(255,159,67,.4)');
+    rb.addColorStop(.33, 'rgba(255,217,61,.4)');
+    rb.addColorStop(.5, 'rgba(107,203,119,.4)');
+    rb.addColorStop(.67, 'rgba(116,185,255,.4)');
+    rb.addColorStop(.83, 'rgba(162,155,254,.4)');
+    rb.addColorStop(1, 'rgba(253,121,168,.4)');
+    X.fillStyle = rb;
+    X.beginPath(); X.roundRect(cx-pw/2, py-10, pw, 20, 10); X.fill();
+  }
+  X.shadowBlur = 0;
+
+  // Cloud puffs at edges
+  X.fillStyle = 'rgba(255,255,255,.25)';
+  const clouds = [cx-pw/2+10, cx-pw/2+30, cx+pw/2-10, cx+pw/2-30, cx];
+  clouds.forEach((cx2, i) => {
+    X.beginPath(); X.arc(cx2, py, 10+i%3*3, 0, Math.PI*2); X.fill();
+  });
+
+  // Sparkle dots
+  for (let i=0;i<6;i++) {
+    const sx = cx-pw/2 + (pw/5)*i + Math.sin(gameTime*2+i)*10;
+    const sy = py-8+Math.cos(gameTime*3+i*2)*4;
+    X.fillStyle = `hsla(${(gameTime*60+i*60)%360},100%,75%,.7)`;
+    X.beginPath(); X.arc(sx, sy, 2, 0, Math.PI*2); X.fill();
+  }
+}
+
+function drawPlatTrampoline(cx, py, pw, dmg) {
+  // Trampoline / safety net with springs
+  const c1 = dmg ? '#cc3333' : TH.platColor;
+  const c2 = dmg ? '#ff5555' : TH.platHighlight;
+  X.shadowColor = dmg?'#ff0000':TH.accent; X.shadowBlur = 15;
+
+  // Fabric surface (slight curve)
+  X.fillStyle = dmg?'rgba(255,50,50,.4)':'rgba(183,28,28,.35)';
+  X.beginPath();
+  X.moveTo(cx-pw/2, py+4);
+  X.quadraticCurveTo(cx, py-6, cx+pw/2, py+4);
+  X.lineTo(cx+pw/2, py+8);
+  X.quadraticCurveTo(cx, py-2, cx-pw/2, py+8);
+  X.closePath(); X.fill();
+  X.shadowBlur = 0;
+
+  // Edge frame
+  X.strokeStyle = c2; X.lineWidth = 3;
+  X.beginPath();
+  X.moveTo(cx-pw/2, py+4);
+  X.quadraticCurveTo(cx, py-8, cx+pw/2, py+4);
+  X.stroke();
+
+  // Springs underneath
+  X.strokeStyle = '#888'; X.lineWidth = 2;
+  for (let i=0; i<6; i++) {
+    const sx = cx-pw/2+20 + (pw-40)/5*i;
+    const springH = 12 + Math.sin(gameTime*5+i)*3;
+    X.beginPath();
+    for (let j=0; j<4; j++) {
+      X.lineTo(sx + (j%2?5:-5), py+8 + (springH/4)*j);
+    }
+    X.stroke();
+  }
+
+  // "RESCUE" text on fabric
+  X.fillStyle = 'rgba(255,255,255,.15)';
+  X.font = '600 10px Fredoka,sans-serif'; X.textAlign='center';
+  X.fillText('RESCUE', cx, py+2);
+}
+
+// ═══ GAME LOOP ═══
+function loop(ts) {
+  const dt = Math.min((ts - lt) / 1000, .05);
+  lt = ts;
   update(dt);
   draw();
-  if (gameRunning) animFrame = requestAnimationFrame(gameLoop);
+  if (gameOn) raf = requestAnimationFrame(loop);
 }
 
-// ── End Game ──
+// ═══ END GAME ═══
 function endGame() {
-  gameRunning = false;
-  if (animFrame) cancelAnimationFrame(animFrame);
-  document.getElementById('hud').classList.add('hidden');
-  document.getElementById('angle-bar').classList.add('hidden');
-  document.getElementById('angle-labels').classList.add('hidden');
+  gameOn = false;
+  if (raf) cancelAnimationFrame(raf);
+  ['hud','angle-bar','angle-labels'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
   const maxROM = maxDF + Math.abs(maxPF);
-  const pct = totalItems > 0 ? Math.round((caughtItems / totalItems) * 100) : 0;
+  const pct = total > 0 ? Math.round((caught/total)*100) : 0;
 
   let title = '🎉 Great Job!';
   if (pct >= 90) title = '🏆 AMAZING!';
@@ -1578,29 +1227,24 @@ function endGame() {
 
   document.getElementById('results-title').textContent = title;
   document.getElementById('res-score').textContent = score;
-  document.getElementById('res-caught').textContent = caughtItems + '/' + totalItems + ' (' + pct + '%)';
-  document.getElementById('res-rom').textContent = maxROM.toFixed(0) + '°';
+  document.getElementById('res-caught').textContent = caught+'/'+total+' ('+pct+'%)';
+  document.getElementById('res-rom').textContent = maxROM.toFixed(0)+'°';
   document.getElementById('res-streak').textContent = bestStreak;
 
   showScreen('results-screen');
 }
 
-// ── Prevent zoom/scroll ──
+// ═══ PREVENT ZOOM/SCROLL ═══
 document.addEventListener('gesturestart', e => e.preventDefault());
-document.addEventListener('touchmove', e => {
-  if (gameRunning) e.preventDefault();
-}, { passive: false });
+document.addEventListener('touchmove', e => { if (gameOn) e.preventDefault(); }, {passive:false});
 
 // Polyfill roundRect
-if (!ctx.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-    r = Math.min(r, w/2, h/2);
-    this.moveTo(x + r, y);
-    this.arcTo(x + w, y, x + w, y + h, r);
-    this.arcTo(x + w, y + h, x, y + h, r);
-    this.arcTo(x, y + h, x, y, r);
-    this.arcTo(x, y, x + w, y, r);
-    this.closePath();
+if (!X.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
+    r=Math.min(r,w/2,h/2);
+    this.moveTo(x+r,y); this.arcTo(x+w,y,x+w,y+h,r);
+    this.arcTo(x+w,y+h,x,y+h,r); this.arcTo(x,y+h,x,y,r);
+    this.arcTo(x,y,x+w,y,r); this.closePath();
   };
 }
 </script>
