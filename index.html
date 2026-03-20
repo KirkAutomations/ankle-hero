@@ -188,6 +188,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #hud .stats-block { text-align: right; }
 #hud .catches { font-size: 1rem; }
 #hud .timer { font-size: 0.8rem; color: #aaa; }
+#hud .hearts { font-size: 1.2rem; margin-top: 2px; }
 
 /* ── Angle indicator (side bar) ── */
 #angle-bar {
@@ -298,6 +299,7 @@ canvas { display: block; width: 100%; height: 100%; }
   <div class="score-block">
     <div class="score" id="hud-score">0</div>
     <div class="streak" id="hud-streak"></div>
+    <div class="hearts" id="hud-hearts">❤️❤️❤️</div>
   </div>
   <div class="rom-block">
     <div class="rom-label">Ankle Angle</div>
@@ -392,8 +394,8 @@ canvas { display: block; width: 100%; height: 100%; }
 
 <script>
 // ════════════════════════════════════════════════════════
-//  ANKLE HERO — Therapeutic ankle dorsiflexion/plantar
-//  flexion game for pediatric toe walkers
+//  ANKLE HERO v2 — Therapeutic Ankle ROM Game
+//  Visual Overhaul: visible collection, damage fx, popups
 // ════════════════════════════════════════════════════════
 
 const canvas = document.getElementById('game');
@@ -425,6 +427,8 @@ const THEMES = {
     accent: '#6bcb77',
     basketEmoji: '🧺',
     basketLabel: 'Rescue Basket',
+    bucketColor: '#8B6914',
+    bucketHighlight: '#C49A28',
     items: [
       { emoji: '🐵', pts: 10, name: 'Monkey' },
       { emoji: '🐘', pts: 15, name: 'Elephant' },
@@ -433,10 +437,8 @@ const THEMES = {
       { emoji: '🐼', pts: 20, name: 'Panda' },
       { emoji: '🦁', pts: 25, name: 'Lion Cub', rare: true }
     ],
-    hazards: [{ emoji: '🪨', name: 'Rock' }],
+    hazards: [{ emoji: '🪨', name: 'Rock', pts: -10 }],
     bgElements: ['🌿', '🌴', '🌳'],
-    catchSound: 'pop',
-    music: 'cheerful',
     groundColor: '#2d5a27',
     skyColors: ['#87ceeb', '#5ba3d9', '#2d7a3a']
   },
@@ -448,6 +450,8 @@ const THEMES = {
     accent: '#ff9f43',
     basketEmoji: '🪹',
     basketLabel: 'Nest',
+    bucketColor: '#6B4226',
+    bucketHighlight: '#A0694B',
     items: [
       { emoji: '🥚', pts: 10, name: 'Egg' },
       { emoji: '🦴', pts: 8, name: 'Bone' },
@@ -456,7 +460,7 @@ const THEMES = {
       { emoji: '🌋', pts: 5, name: 'Lava Rock' },
       { emoji: '🦕', pts: 30, name: 'T-Rex Baby', rare: true }
     ],
-    hazards: [{ emoji: '☄️', name: 'Meteor' }],
+    hazards: [{ emoji: '☄️', name: 'Meteor', pts: -10 }],
     bgElements: ['🌿', '🪨', '🌋'],
     groundColor: '#5a3a1a',
     skyColors: ['#ff7675', '#d35400', '#2d1a0a']
@@ -469,6 +473,8 @@ const THEMES = {
     accent: '#0abde3',
     basketEmoji: '🪣',
     basketLabel: 'Bucket',
+    bucketColor: '#1565C0',
+    bucketHighlight: '#42A5F5',
     items: [
       { emoji: '🐟', pts: 10, name: 'Fish' },
       { emoji: '🐠', pts: 12, name: 'Tropical Fish' },
@@ -477,7 +483,7 @@ const THEMES = {
       { emoji: '🐚', pts: 8, name: 'Shell' },
       { emoji: '🐬', pts: 30, name: 'Dolphin', rare: true }
     ],
-    hazards: [{ emoji: '🪼', name: 'Jellyfish' }],
+    hazards: [{ emoji: '🪼', name: 'Jellyfish', pts: -10 }],
     bgElements: ['🫧', '🌊', '🐚'],
     groundColor: '#1a4a6a',
     skyColors: ['#74b9ff', '#0984e3', '#0a2a4a']
@@ -490,6 +496,8 @@ const THEMES = {
     accent: '#ffd93d',
     basketEmoji: '🛸',
     basketLabel: 'Space Pod',
+    bucketColor: '#4A148C',
+    bucketHighlight: '#7B1FA2',
     items: [
       { emoji: '⭐', pts: 10, name: 'Star' },
       { emoji: '🌟', pts: 15, name: 'Bright Star' },
@@ -498,7 +506,7 @@ const THEMES = {
       { emoji: '💫', pts: 8, name: 'Shooting Star' },
       { emoji: '👽', pts: 30, name: 'Alien Friend', rare: true }
     ],
-    hazards: [{ emoji: '☄️', name: 'Asteroid' }],
+    hazards: [{ emoji: '☄️', name: 'Asteroid', pts: -10 }],
     bgElements: ['✨', '💫', '🌌'],
     groundColor: '#1a1a3e',
     skyColors: ['#2d1b69', '#0a0a2e', '#050515']
@@ -511,6 +519,8 @@ const THEMES = {
     accent: '#fd79a8',
     basketEmoji: '☁️',
     basketLabel: 'Cloud Basket',
+    bucketColor: '#8E24AA',
+    bucketHighlight: '#CE93D8',
     items: [
       { emoji: '💎', pts: 10, name: 'Crystal' },
       { emoji: '🌈', pts: 15, name: 'Rainbow' },
@@ -519,7 +529,7 @@ const THEMES = {
       { emoji: '✨', pts: 10, name: 'Sparkle' },
       { emoji: '🦄', pts: 30, name: 'Baby Unicorn', rare: true }
     ],
-    hazards: [{ emoji: '🌩️', name: 'Storm Cloud' }],
+    hazards: [{ emoji: '🌩️', name: 'Storm Cloud', pts: -10 }],
     bgElements: ['🌸', '✨', '🌙'],
     groundColor: '#3a2a5a',
     skyColors: ['#a29bfe', '#6c5ce7', '#2a1a3e']
@@ -532,6 +542,8 @@ const THEMES = {
     accent: '#e74c3c',
     basketEmoji: '🛡️',
     basketLabel: 'Shield',
+    bucketColor: '#B71C1C',
+    bucketHighlight: '#EF5350',
     items: [
       { emoji: '👶', pts: 15, name: 'Baby' },
       { emoji: '🐱', pts: 10, name: 'Kitten' },
@@ -540,7 +552,7 @@ const THEMES = {
       { emoji: '💰', pts: 8, name: 'Treasure' },
       { emoji: '🦸‍♀️', pts: 30, name: 'Hero Partner', rare: true }
     ],
-    hazards: [{ emoji: '💣', name: 'Bomb' }],
+    hazards: [{ emoji: '💣', name: 'Bomb', pts: -10 }],
     bgElements: ['🏢', '🏗️', '🌆'],
     groundColor: '#2a2a4a',
     skyColors: ['#636e72', '#2d3436', '#1a1a3e']
@@ -567,7 +579,7 @@ Object.keys(THEMES).forEach(key => {
 // ══════════════════════
 let currentTheme = null;
 let theme = null;
-let footPosition = 'top'; // top | shin
+let footPosition = 'top';
 let sensitivity = 3;
 let calibrationBeta = 0;
 let calibrated = false;
@@ -579,16 +591,25 @@ let lastTime = 0;
 // Motion
 let rawBeta = 0;
 let rawGamma = 0;
-let ankleAngle = 0; // degrees, positive = DF, negative = PF
+let ankleAngle = 0;
 let useMouse = false;
 let mouseY = 0;
 
 // Game objects
-let basket = { y: 0, targetY: 0, vy: 0 };
+let basket = { y: 0, targetY: 0, width: 90, height: 55 };
 let items = [];
 let particles = [];
+let floatingTexts = [];
 let bgParticles = [];
-let bgElements = [];
+let collectedInBasket = []; // visible items sitting in the basket
+let catchAnimations = [];   // items animating into basket
+let groundSplats = [];      // miss splat effects
+
+// Health & damage
+let health = 3;
+let maxHealth = 3;
+let damageFlash = 0;     // 0-1 red overlay
+let basketDamageFlash = 0; // basket-specific red flash
 
 // Score / stats
 let score = 0;
@@ -597,10 +618,10 @@ let caughtItems = 0;
 let missedItems = 0;
 let streak = 0;
 let bestStreak = 0;
-let maxDF = 0; // max dorsiflexion observed
-let maxPF = 0; // max plantar flexion observed
+let maxDF = 0;
+let maxPF = 0;
 let gameTime = 0;
-let gameDuration = 120; // 2 minutes
+let gameDuration = 120;
 let level = 1;
 let levelTimer = 0;
 let spawnTimer = 0;
@@ -664,8 +685,8 @@ function enableMotion() {
   if (motionEnabled) return;
   motionEnabled = true;
   window.addEventListener('deviceorientation', e => {
-    rawBeta = e.beta || 0;   // front/back tilt (-180 to 180)
-    rawGamma = e.gamma || 0; // left/right tilt (-90 to 90)
+    rawBeta = e.beta || 0;
+    rawGamma = e.gamma || 0;
   });
 }
 
@@ -674,7 +695,7 @@ const isDesktop = !('ontouchstart' in window) && !navigator.maxTouchPoints;
 if (isDesktop) useMouse = true;
 canvas.addEventListener('mousemove', e => {
   if (!useMouse) return;
-  mouseY = (e.clientY - H / 2) / (H / 2); // -1 to 1
+  mouseY = (e.clientY - H / 2) / (H / 2);
 });
 canvas.addEventListener('touchmove', e => {
   if (!useMouse) return;
@@ -686,14 +707,8 @@ canvas.addEventListener('touchmove', e => {
 let calInterval = null;
 async function goCalibrate() {
   const granted = await requestMotionPermission();
-  if (granted) {
-    enableMotion();
-  } else {
-    useMouse = true;
-  }
+  if (granted) enableMotion(); else useMouse = true;
   showScreen('calibrate-screen');
-
-  // Show live angle
   if (calInterval) clearInterval(calInterval);
   calInterval = setInterval(() => {
     const angle = useMouse ? 0 : rawBeta;
@@ -704,7 +719,7 @@ async function goCalibrate() {
 function calibrate() {
   calibrationBeta = rawBeta;
   calibrated = true;
-  document.getElementById('cal-status').innerHTML = '✅ Neutral set at <strong>' + rawBeta.toFixed(1) + '°</strong>. Ready to play!';
+  document.getElementById('cal-status').innerHTML = '✅ Neutral set at <strong>' + rawBeta.toFixed(1) + '°</strong>. Ready!';
   document.getElementById('cal-btn').textContent = '▶ START GAME';
   document.getElementById('cal-btn').onclick = () => {
     if (calInterval) clearInterval(calInterval);
@@ -714,41 +729,138 @@ function calibrate() {
 
 // ── Angle computation ──
 function computeAnkleAngle() {
-  if (useMouse) {
-    return -mouseY * 30; // -30 to +30
-  }
+  if (useMouse) return -mouseY * 30;
   let delta = rawBeta - calibrationBeta;
-
-  // Foot on top: dorsiflexion (foot up) decreases beta
-  // Shin: dorsiflexion increases beta
-  if (footPosition === 'top') {
-    delta = -delta;
-  }
-
-  // Apply sensitivity multiplier
+  if (footPosition === 'top') delta = -delta;
   const sensMultiplier = 0.5 + (sensitivity - 1) * 0.35;
   delta *= sensMultiplier;
-
-  // Clamp to reasonable ROM (-40 to +40)
   return Math.max(-40, Math.min(40, delta));
+}
+
+// ═════════════════════════════════════
+//  VISUAL EFFECTS SYSTEM
+// ═════════════════════════════════════
+
+// Floating score text
+function spawnFloatingText(x, y, text, color, size) {
+  floatingTexts.push({
+    x, y,
+    text,
+    color: color || '#fff',
+    size: size || 20,
+    life: 1.2,
+    maxLife: 1.2,
+    vy: -80,
+    scale: 1.3 // starts big, shrinks to 1
+  });
+}
+
+// Burst particles (colored dots)
+function spawnParticles(x, y, color, count, speed) {
+  const spd = speed || 180;
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * (spd * 0.5 + Math.random() * spd * 0.5),
+      vy: Math.sin(angle) * (spd * 0.5 + Math.random() * spd * 0.5) - 40,
+      life: 0.5 + Math.random() * 0.4,
+      maxLife: 0.9,
+      r: 3 + Math.random() * 5,
+      color
+    });
+  }
+}
+
+// Ring/shockwave effect
+function spawnRing(x, y, color) {
+  particles.push({
+    x, y,
+    vx: 0, vy: 0,
+    life: 0.5, maxLife: 0.5,
+    r: 10,
+    color,
+    isRing: true,
+    ringRadius: 10,
+    ringMaxRadius: 80
+  });
+}
+
+// Emoji pop (caught item floats up and fades)
+function spawnEmojiPop(x, y, emoji) {
+  particles.push({
+    x, y,
+    vx: (Math.random() - 0.5) * 30,
+    vy: -60,
+    life: 0.9, maxLife: 0.9,
+    r: 24, color: 'emoji',
+    emoji, scale: 1.4
+  });
+}
+
+// Catch animation (item shrinks toward basket)
+function startCatchAnimation(item) {
+  catchAnimations.push({
+    emoji: item.emoji,
+    fromX: item.x, fromY: item.y,
+    size: item.size,
+    time: 0,
+    duration: 0.25
+  });
+}
+
+// Add to collected items in basket
+function addToBasket(emoji) {
+  // Keep max 6 visible items
+  if (collectedInBasket.length >= 6) collectedInBasket.shift();
+  const slot = collectedInBasket.length;
+  collectedInBasket.push({
+    emoji,
+    offsetX: (Math.random() - 0.5) * 40,
+    offsetY: -8 - slot * 5 + Math.random() * 4,
+    bobPhase: Math.random() * Math.PI * 2,
+    age: 0,
+    bounceIn: 1.0 // starts bouncing, decays to 0
+  });
+}
+
+// Ground splat when item missed
+function spawnGroundSplat(x, emoji) {
+  groundSplats.push({
+    x, y: H - 10,
+    emoji,
+    life: 1.5,
+    maxLife: 1.5,
+    squash: 0
+  });
+  // Splat particles
+  for (let i = 0; i < 6; i++) {
+    particles.push({
+      x: x + (Math.random() - 0.5) * 20,
+      y: H - 15,
+      vx: (Math.random() - 0.5) * 120,
+      vy: -40 - Math.random() * 60,
+      life: 0.4 + Math.random() * 0.3,
+      maxLife: 0.7,
+      r: 2 + Math.random() * 3,
+      color: 'rgba(255,255,255,0.5)'
+    });
+  }
 }
 
 // ── Item spawning ──
 function spawnItem() {
-  const t = theme;
-  // Pick item based on weights
   let itemDef;
-  if (Math.random() < 0.1 + level * 0.01) {
-    // Hazard
-    itemDef = { ...t.hazards[0], pts: -10, isHazard: true };
+  if (Math.random() < 0.12 + level * 0.015) {
+    itemDef = { ...theme.hazards[0], isHazard: true };
   } else {
-    const pool = t.items.filter(i => !i.rare || Math.random() < 0.08);
+    const pool = theme.items.filter(i => !i.rare || Math.random() < 0.08);
     itemDef = pool[Math.floor(Math.random() * pool.length)];
   }
 
   const item = {
-    x: 30 + Math.random() * (W - 60),
-    y: -40,
+    x: 40 + Math.random() * (W - 80),
+    y: -50,
     emoji: itemDef.emoji,
     pts: itemDef.pts || 10,
     name: itemDef.name,
@@ -758,40 +870,16 @@ function spawnItem() {
     wobble: Math.random() * Math.PI * 2,
     wobbleAmt: 15 + Math.random() * 20,
     rotation: 0,
-    rotSpeed: (Math.random() - 0.5) * 3,
-    size: itemDef.rare ? 36 : (itemDef.isHazard ? 28 : 30),
+    rotSpeed: (Math.random() - 0.5) * 2,
+    size: itemDef.rare ? 42 : (itemDef.isHazard ? 34 : 36),
     caught: false,
-    missed: false
+    missed: false,
+    // Trail
+    trail: [],
+    trailTimer: 0
   };
   items.push(item);
   totalItems++;
-}
-
-// ── Particles ──
-function spawnParticles(x, y, color, count) {
-  for (let i = 0; i < count; i++) {
-    particles.push({
-      x, y,
-      vx: (Math.random() - 0.5) * 180,
-      vy: (Math.random() - 0.5) * 180 - 60,
-      life: 0.5 + Math.random() * 0.4,
-      maxLife: 0.9,
-      r: 2 + Math.random() * 4,
-      color
-    });
-  }
-}
-
-function spawnCatchEffect(x, y, emoji) {
-  // Big emoji pop
-  particles.push({
-    x, y,
-    vx: 0, vy: -40,
-    life: 0.8, maxLife: 0.8,
-    r: 20, color: 'emoji',
-    emoji, scale: 1
-  });
-  spawnParticles(x, y, theme.accent, 12);
 }
 
 // ── Level Banner ──
@@ -811,7 +899,6 @@ function showBanner(text) {
 // ── Init BG elements ──
 function initBG() {
   bgParticles = [];
-  bgElements = [];
   for (let i = 0; i < 25; i++) {
     bgParticles.push({
       x: Math.random() * W,
@@ -845,8 +932,15 @@ function startGame() {
   levelTimer = 0;
   spawnTimer = 0;
   screenShake = 0;
+  health = maxHealth;
+  damageFlash = 0;
+  basketDamageFlash = 0;
   items = [];
   particles = [];
+  floatingTexts = [];
+  collectedInBasket = [];
+  catchAnimations = [];
+  groundSplats = [];
 
   basket.y = H * 0.5;
   basket.targetY = H * 0.5;
@@ -863,43 +957,52 @@ function startGame() {
 // ── HUD ──
 function updateHUD() {
   document.getElementById('hud-score').textContent = score;
-  document.getElementById('hud-streak').textContent = streak > 1 ? '🔥 ' + streak + ' streak!' : '';
+
+  let streakText = '';
+  if (streak >= 10) streakText = '🔥🔥🔥 ' + streak + ' MEGA STREAK!';
+  else if (streak >= 5) streakText = '🔥🔥 ' + streak + ' streak!';
+  else if (streak > 1) streakText = '🔥 ' + streak + ' streak';
+  document.getElementById('hud-streak').textContent = streakText;
+
   document.getElementById('hud-angle').textContent = ankleAngle.toFixed(0) + '°';
   document.getElementById('hud-angle').style.color = ankleAngle > 0 ? '#6bcb77' : ankleAngle < -5 ? '#ff6b6b' : '#aaa';
   document.getElementById('hud-catches').textContent = '🎯 ' + caughtItems + '/' + totalItems;
+
   const remaining = Math.max(0, gameDuration - gameTime);
   const min = Math.floor(remaining / 60);
   const sec = Math.floor(remaining % 60);
   document.getElementById('hud-timer').textContent = min + ':' + String(sec).padStart(2, '0');
+
+  // Hearts
+  let hearts = '';
+  for (let i = 0; i < maxHealth; i++) {
+    hearts += i < health ? '❤️' : '🖤';
+  }
+  document.getElementById('hud-hearts').textContent = hearts;
 }
 
-// ── Update ──
+// ══════════════════════
+//  UPDATE
+// ══════════════════════
 function update(dt) {
   if (!gameRunning) return;
 
   gameTime += dt;
-  if (gameTime >= gameDuration) {
-    endGame();
-    return;
-  }
+  if (gameTime >= gameDuration) { endGame(); return; }
 
   // Compute ankle angle
   ankleAngle = computeAnkleAngle();
-
-  // Track ROM
   if (ankleAngle > maxDF) maxDF = ankleAngle;
   if (ankleAngle < maxPF) maxPF = ankleAngle;
 
-  // Map angle to basket Y position
-  // DF (+) = up, PF (-) = down
+  // Map angle to basket Y
   const neutralY = H * 0.5;
   const rangeY = H * 0.38;
   const targetY = neutralY - (ankleAngle / 35) * rangeY;
   basket.targetY = Math.max(H * 0.08, Math.min(H * 0.88, targetY));
   basket.y += (basket.targetY - basket.y) * 8 * dt;
 
-  // Update angle bar marker
-  const barTop = H * 0.15;
+  // Angle bar marker
   const barH = H * 0.7;
   const markerPct = 0.5 - (ankleAngle / 70);
   document.getElementById('angle-marker').style.top =
@@ -913,71 +1016,165 @@ function update(dt) {
     spawnTimer = spawnRate + Math.random() * 0.5;
   }
 
-  // Update items
-  const basketLeft = W / 2 - 40;
-  const basketRight = W / 2 + 40;
-  const basketTop = basket.y - 25;
-  const basketBot = basket.y + 15;
+  // Basket bounds
+  const bx = W / 2;
+  const by = basket.y;
+  const bHalfW = basket.width / 2;
+  const bTop = by - basket.height / 2;
+  const bBot = by + basket.height / 2;
 
+  // Update items
   items.forEach(item => {
     if (item.caught || item.missed) return;
 
+    // Trail
+    item.trailTimer += dt;
+    if (item.trailTimer > 0.04) {
+      item.trailTimer = 0;
+      item.trail.push({ x: item.x, y: item.y, life: 0.3 });
+      if (item.trail.length > 8) item.trail.shift();
+    }
+    item.trail.forEach(t => t.life -= dt);
+    item.trail = item.trail.filter(t => t.life > 0);
+
+    // Move
     item.y += item.speed * dt;
     item.x += Math.sin(item.wobble) * item.wobbleAmt * dt;
     item.wobble += dt * 2.5;
     item.rotation += item.rotSpeed * dt;
 
-    // Check catch
-    if (item.y > basketTop - 10 && item.y < basketBot + 10 &&
-        item.x > basketLeft - 5 && item.x < basketRight + 5) {
+    // Check catch (within basket)
+    if (item.y > bTop - 15 && item.y < bBot + 10 &&
+        item.x > bx - bHalfW - 10 && item.x < bx + bHalfW + 10) {
       item.caught = true;
 
       if (item.isHazard) {
-        // Hit hazard — lose points, break streak
+        // ── DAMAGE ──
         score = Math.max(0, score + item.pts);
         streak = 0;
-        screenShake = 8;
-        spawnParticles(item.x, item.y, '#ff6b6b', 15);
+        health = Math.max(0, health - 1);
+        damageFlash = 1.0;
+        basketDamageFlash = 1.0;
+        screenShake = 15;
+
+        // Red damage particles
+        spawnParticles(item.x, item.y, '#ff4444', 18, 250);
+        spawnRing(item.x, item.y, '#ff4444');
+
+        // Damage score popup
+        spawnFloatingText(item.x, item.y - 20, item.pts.toString(), '#ff4444', 28);
+        spawnFloatingText(bx, by - 50, '💥 OUCH!', '#ff6b6b', 22);
+
       } else {
-        // Caught!
+        // ── CATCH ──
         caughtItems++;
         streak++;
         if (streak > bestStreak) bestStreak = streak;
         const multiplier = Math.min(streak, 5);
         const pts = item.pts * multiplier;
         score += pts;
-        spawnCatchEffect(item.x, item.y, item.emoji);
+
+        // Catch animation: item flies into basket
+        startCatchAnimation(item);
+
+        // Delay adding to basket (after animation)
+        setTimeout(() => addToBasket(item.emoji), 200);
+
+        // Green/gold particles
+        const pColor = streak >= 5 ? '#ffd93d' : theme.accent;
+        spawnParticles(item.x, item.y, pColor, 14, 200);
+        spawnRing(item.x, item.y, pColor);
+
+        // Emoji pop
+        spawnEmojiPop(item.x, item.y - 30, item.emoji);
+
+        // Score popup
+        let scoreText = '+' + pts;
+        if (multiplier > 1) scoreText += ' x' + multiplier;
+        const scoreColor = multiplier >= 4 ? '#ffd93d' : (multiplier >= 2 ? '#ffa502' : theme.accent);
+        spawnFloatingText(item.x, item.y - 40, scoreText, scoreColor, multiplier >= 3 ? 30 : 24);
+
+        // Streak milestone popups
+        if (streak === 5) spawnFloatingText(bx, by - 70, '🔥 ON FIRE!', '#ffa502', 26);
+        if (streak === 10) spawnFloatingText(bx, by - 70, '🔥🔥 UNSTOPPABLE!', '#ffd93d', 30);
+
+        // Rare item extra celebration
+        if (item.rare) {
+          spawnParticles(item.x, item.y, '#ffd93d', 25, 300);
+          spawnFloatingText(item.x, item.y - 65, '⭐ RARE!', '#ffd93d', 28);
+        }
+
+        // Health regen on streak milestones
+        if (streak === 10 && health < maxHealth) {
+          health = Math.min(maxHealth, health + 1);
+          spawnFloatingText(bx, by - 90, '❤️ +1 HP!', '#ff6b6b', 22);
+        }
       }
     }
 
     // Missed (fell off bottom)
-    if (item.y > H + 50 && !item.caught) {
+    if (item.y > H + 20 && !item.caught) {
       item.missed = true;
       if (!item.isHazard) {
         missedItems++;
         streak = 0;
+        spawnGroundSplat(item.x, item.emoji);
       }
     }
   });
 
-  // Prune
-  items = items.filter(i => !(i.caught || i.missed) || (i.caught && i.y < H + 100));
+  // Prune caught/missed items
+  items = items.filter(i => !i.caught && !i.missed);
 
-  // Particles
+  // Update catch animations
+  catchAnimations.forEach(a => a.time += dt);
+  catchAnimations = catchAnimations.filter(a => a.time < a.duration);
+
+  // Update floating texts
+  floatingTexts.forEach(ft => {
+    ft.y += ft.vy * dt;
+    ft.vy *= 0.96;
+    ft.life -= dt;
+    ft.scale = Math.max(1, ft.scale - dt * 1.5);
+  });
+  floatingTexts = floatingTexts.filter(ft => ft.life > 0);
+
+  // Update particles
   particles.forEach(p => {
-    if (p.color === 'emoji') {
-      p.y += p.vy * dt;
-      p.vy += 20 * dt;
+    if (p.isRing) {
       p.life -= dt;
-      p.scale = p.life / p.maxLife;
+      p.ringRadius += (p.ringMaxRadius - p.ringRadius) * 5 * dt;
+    } else if (p.color === 'emoji') {
+      p.y += p.vy * dt;
+      p.x += p.vx * dt;
+      p.vy += 30 * dt;
+      p.life -= dt;
+      p.scale = Math.max(0.3, p.life / p.maxLife * p.scale);
     } else {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      p.vy += 120 * dt;
+      p.vy += 150 * dt;
       p.life -= dt;
     }
   });
   particles = particles.filter(p => p.life > 0);
+
+  // Update ground splats
+  groundSplats.forEach(s => {
+    s.life -= dt;
+    s.squash = Math.min(1, s.squash + dt * 8);
+  });
+  groundSplats = groundSplats.filter(s => s.life > 0);
+
+  // Update collected items bob
+  collectedInBasket.forEach(c => {
+    c.age += dt;
+    c.bounceIn = Math.max(0, c.bounceIn - dt * 4);
+  });
+
+  // Damage flash decay
+  if (damageFlash > 0) damageFlash = Math.max(0, damageFlash - dt * 3);
+  if (basketDamageFlash > 0) basketDamageFlash = Math.max(0, basketDamageFlash - dt * 4);
 
   // BG particles
   bgParticles.forEach(p => {
@@ -1000,10 +1197,13 @@ function update(dt) {
   updateHUD();
 }
 
-// ── Draw ──
+// ══════════════════════
+//  DRAW
+// ══════════════════════
 function draw() {
   ctx.save();
 
+  // Screen shake
   if (screenShake > 0) {
     ctx.translate(
       (Math.random() - 0.5) * screenShake * 2,
@@ -1011,7 +1211,7 @@ function draw() {
     );
   }
 
-  // Background
+  // ── Background gradient ──
   const grad = ctx.createLinearGradient(0, 0, 0, H);
   if (theme) {
     const sky = theme.skyColors || ['#1a1a2e', '#16213e', '#0f3460'];
@@ -1023,7 +1223,7 @@ function draw() {
   ctx.fillStyle = grad;
   ctx.fillRect(-20, -20, W + 40, H + 40);
 
-  // BG particles (snow, bubbles, stars depending on theme)
+  // ── BG particles ──
   bgParticles.forEach(p => {
     ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
     ctx.beginPath();
@@ -1031,11 +1231,9 @@ function draw() {
     ctx.fill();
   });
 
-  // ── Zone indicators (DF up, PF down) ──
-  // Top zone (DF targets)
+  // ── Zone indicators ──
   ctx.fillStyle = 'rgba(107, 203, 119, 0.03)';
   ctx.fillRect(0, 0, W, H * 0.35);
-  // Bottom zone (PF targets)
   ctx.fillStyle = 'rgba(255, 107, 107, 0.03)';
   ctx.fillRect(0, H * 0.65, W, H * 0.35);
 
@@ -1049,6 +1247,41 @@ function draw() {
   ctx.stroke();
   ctx.setLineDash([]);
 
+  // ── Ground splats ──
+  groundSplats.forEach(s => {
+    const alpha = s.life / s.maxLife;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.7;
+    ctx.translate(s.x, s.y);
+    // Squash the emoji flat
+    ctx.scale(1 + s.squash * 0.6, Math.max(0.2, 1 - s.squash * 0.7));
+    ctx.font = '28px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s.emoji, 0, 0);
+    ctx.restore();
+  });
+
+  // ── Item trails ──
+  items.forEach(item => {
+    if (item.caught || item.missed) return;
+    item.trail.forEach(t => {
+      const alpha = (t.life / 0.3) * 0.3;
+      ctx.globalAlpha = alpha;
+      if (item.isHazard) {
+        ctx.fillStyle = '#ff4444';
+      } else if (item.rare) {
+        ctx.fillStyle = '#ffd93d';
+      } else {
+        ctx.fillStyle = theme.accent;
+      }
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  });
+
   // ── Falling items ──
   items.forEach(item => {
     if (item.caught || item.missed) return;
@@ -1056,12 +1289,25 @@ function draw() {
     ctx.translate(item.x, item.y);
     ctx.rotate(item.rotation);
 
-    // Glow
+    // Glow effect
     if (item.rare) {
-      ctx.shadowColor = theme.accent;
-      ctx.shadowBlur = 20;
+      ctx.shadowColor = '#ffd93d';
+      ctx.shadowBlur = 30;
+      // Extra glow circle
+      ctx.fillStyle = 'rgba(255,217,61,0.15)';
+      ctx.beginPath();
+      ctx.arc(0, 0, item.size * 0.8, 0, Math.PI * 2);
+      ctx.fill();
     } else if (item.isHazard) {
       ctx.shadowColor = '#ff4444';
+      ctx.shadowBlur = 20;
+      // Danger glow
+      ctx.fillStyle = 'rgba(255,68,68,0.12)';
+      ctx.beginPath();
+      ctx.arc(0, 0, item.size * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.shadowColor = theme.accent;
       ctx.shadowBlur = 12;
     }
 
@@ -1073,51 +1319,39 @@ function draw() {
     ctx.restore();
   });
 
-  // ── Basket ──
+  // ── Catch animations (items flying toward basket) ──
   const bx = W / 2;
   const by = basket.y;
+  catchAnimations.forEach(a => {
+    const t = a.time / a.duration;
+    const ease = t * t; // ease-in
+    const x = a.fromX + (bx - a.fromX) * ease;
+    const y = a.fromY + (by - a.fromY) * ease;
+    const s = a.size * (1 - ease * 0.6);
+    ctx.globalAlpha = 1 - ease * 0.3;
+    ctx.font = Math.max(8, s) + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(a.emoji, x, y);
+    ctx.globalAlpha = 1;
+  });
 
-  // Basket glow
-  ctx.shadowColor = theme ? theme.accent : '#a29bfe';
-  ctx.shadowBlur = 25;
-
-  // Basket body
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  ctx.beginPath();
-  ctx.roundRect(bx - 38, by - 20, 76, 40, 12);
-  ctx.fill();
-  ctx.strokeStyle = theme ? theme.accent : '#a29bfe';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.roundRect(bx - 38, by - 20, 76, 40, 12);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  // Basket emoji
-  ctx.font = '28px serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(theme ? theme.basketEmoji : '🧺', bx, by);
-
-  // ── Catch zone indicator lines ──
-  ctx.strokeStyle = `rgba(255,255,255,0.1)`;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 6]);
-  ctx.beginPath();
-  ctx.moveTo(bx - 45, by);
-  ctx.lineTo(20, by);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(bx + 45, by);
-  ctx.lineTo(W - 30, by);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  // ── BASKET / BUCKET ──
+  drawBasket(bx, by);
 
   // ── Particles ──
   particles.forEach(p => {
-    if (p.color === 'emoji') {
+    if (p.isRing) {
+      const alpha = p.life / p.maxLife;
+      ctx.globalAlpha = alpha * 0.6;
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 3 * alpha;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.ringRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (p.color === 'emoji') {
       ctx.globalAlpha = p.life / p.maxLife;
-      ctx.font = (30 * p.scale) + 'px serif';
+      ctx.font = Math.max(8, 30 * (p.life / p.maxLife)) + 'px serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(p.emoji, p.x, p.y);
@@ -1126,19 +1360,192 @@ function draw() {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r * alpha, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.r * (0.5 + alpha * 0.5), 0, Math.PI * 2);
       ctx.fill();
     }
   });
   ctx.globalAlpha = 1;
 
-  // ── Direction labels on sides ──
+  // ── Floating texts (score popups) ──
+  floatingTexts.forEach(ft => {
+    const alpha = Math.min(1, ft.life / (ft.maxLife * 0.3));
+    ctx.globalAlpha = alpha;
+    ctx.save();
+    ctx.translate(ft.x, ft.y);
+    ctx.scale(ft.scale, ft.scale);
+
+    // Text shadow/outline
+    ctx.font = '700 ' + ft.size + 'px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Outline
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    ctx.lineWidth = 4;
+    ctx.lineJoin = 'round';
+    ctx.strokeText(ft.text, 0, 0);
+
+    // Fill
+    ctx.fillStyle = ft.color;
+    ctx.fillText(ft.text, 0, 0);
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  });
+
+  // ── Direction labels ──
   ctx.fillStyle = 'rgba(107, 203, 119, 0.25)';
   ctx.font = '600 0.65rem Fredoka, sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('↑ TOES UP', 8, H * 0.12);
   ctx.fillStyle = 'rgba(255, 159, 67, 0.25)';
   ctx.fillText('↓ TOES DOWN', 8, H * 0.9);
+
+  // ── DAMAGE FLASH OVERLAY ──
+  if (damageFlash > 0) {
+    ctx.fillStyle = `rgba(255, 0, 0, ${damageFlash * 0.35})`;
+    ctx.fillRect(-20, -20, W + 40, H + 40);
+
+    // Vignette-style damage: darker at edges
+    const vGrad = ctx.createRadialGradient(W/2, H/2, W * 0.2, W/2, H/2, W * 0.7);
+    vGrad.addColorStop(0, 'rgba(255,0,0,0)');
+    vGrad.addColorStop(1, `rgba(180,0,0,${damageFlash * 0.5})`);
+    ctx.fillStyle = vGrad;
+    ctx.fillRect(-20, -20, W + 40, H + 40);
+  }
+
+  ctx.restore();
+}
+
+// ── Draw the basket/bucket ──
+function drawBasket(cx, cy) {
+  const bw = basket.width;
+  const bh = basket.height;
+
+  ctx.save();
+
+  // Damage flash on basket
+  const dmgTint = basketDamageFlash > 0;
+
+  // ── Bucket shape (trapezoid) ──
+  const topW = bw * 0.55;
+  const botW = bw * 0.4;
+  const bucketTop = cy - bh * 0.25;
+  const bucketBot = cy + bh * 0.35;
+  const rimY = bucketTop - 4;
+
+  // Bucket body gradient
+  const bucketGrad = ctx.createLinearGradient(cx - topW, 0, cx + topW, 0);
+  if (dmgTint) {
+    bucketGrad.addColorStop(0, '#cc2222');
+    bucketGrad.addColorStop(0.5, '#ff4444');
+    bucketGrad.addColorStop(1, '#cc2222');
+  } else {
+    bucketGrad.addColorStop(0, theme.bucketColor);
+    bucketGrad.addColorStop(0.5, theme.bucketHighlight);
+    bucketGrad.addColorStop(1, theme.bucketColor);
+  }
+
+  // Glow under bucket
+  ctx.shadowColor = dmgTint ? '#ff0000' : theme.accent;
+  ctx.shadowBlur = dmgTint ? 30 : 20;
+
+  // Bucket body
+  ctx.fillStyle = bucketGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - topW, rimY);
+  ctx.lineTo(cx + topW, rimY);
+  ctx.lineTo(cx + botW, bucketBot);
+  ctx.lineTo(cx - botW, bucketBot);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Bucket rim (top edge, slightly wider)
+  const rimW = topW + 6;
+  ctx.fillStyle = dmgTint ? '#ff6666' : theme.bucketHighlight;
+  ctx.beginPath();
+  ctx.ellipse(cx, rimY, rimW, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Bucket inner shadow (dark ellipse at rim)
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(cx, rimY + 3, topW - 4, 5, 0, 0, Math.PI);
+  ctx.fill();
+
+  // ── Highlight stripe on bucket ──
+  ctx.strokeStyle = `rgba(255,255,255,${dmgTint ? 0.3 : 0.12})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - topW * 0.3, rimY + 4);
+  ctx.lineTo(cx - botW * 0.3, bucketBot - 4);
+  ctx.stroke();
+
+  // ── Basket emoji label (above bucket) ──
+  ctx.font = '22px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(theme.basketEmoji, cx, rimY - 16);
+
+  // ── Collected items inside the bucket ──
+  if (collectedInBasket.length > 0) {
+    const innerTop = rimY + 6;
+    const innerH = bucketBot - innerTop - 6;
+    const innerW = topW * 1.4;
+
+    collectedInBasket.forEach((c, i) => {
+      const t = i / Math.max(1, collectedInBasket.length - 1);
+      // Arrange in rows within the bucket
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      const rowY = innerTop + 8 + row * 16;
+      const rowX = cx + (col - 1) * 18 + c.offsetX * 0.3;
+
+      // Bounce-in effect
+      const bounce = c.bounceIn > 0 ? Math.sin(c.bounceIn * Math.PI * 3) * 6 : 0;
+
+      // Gentle bob
+      const bob = Math.sin(c.bobPhase + c.age * 1.5) * 1.5;
+
+      ctx.globalAlpha = 0.9;
+      ctx.font = '16px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(c.emoji, rowX, rowY + bob - bounce);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Collection counter on bucket ──
+  if (caughtItems > 0) {
+    const countX = cx + topW + 14;
+    const countY = rimY;
+    // Badge
+    ctx.fillStyle = theme.accent;
+    ctx.beginPath();
+    ctx.arc(countX, countY, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 11px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(caughtItems, countX, countY);
+  }
+
+  // ── Catch zone guide lines ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 6]);
+  ctx.beginPath();
+  ctx.moveTo(cx - bw, cy);
+  ctx.lineTo(20, cy);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + bw, cy);
+  ctx.lineTo(W - 30, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
 
   ctx.restore();
 }
@@ -1160,7 +1567,6 @@ function endGame() {
   document.getElementById('angle-bar').classList.add('hidden');
   document.getElementById('angle-labels').classList.add('hidden');
 
-  // Results
   const maxROM = maxDF + Math.abs(maxPF);
   const pct = totalItems > 0 ? Math.round((caughtItems / totalItems) * 100) : 0;
 
