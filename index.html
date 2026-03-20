@@ -106,7 +106,7 @@ canvas{display:block;width:100%;height:100%}
 
 <script>
 // ═══════════════════════════════════════════════
-//  ANKLE HERO v5 — Six Different Game Genres
+//  ANKLE HERO v2 — Six Different Game Genres
 // ═══════════════════════════════════════════════
 
 // ─── Canvas ───
@@ -133,19 +133,19 @@ const GAME_LIST = [
     desc: 'Auto-run through the jungle! Move your ankle up to jump high, down to duck low. Collect coins, dodge obstacles!',
     accent: '#6bcb77', sky: ['#87CEEB','#4BA3D9','#1a5a1a'] },
   { id: 'miner', icon: '⛏️', name: 'Gem Miner', genre: 'Idle Tycoon',
-    desc: 'Hold your ankle at different heights to mine 3 resource zones. Watch your fortune grow! Auto-upgrades at milestones.',
+    desc: 'Mine 3 resource zones — diamonds at the bottom are worth the most! Zones deplete and recover, forcing alternation.',
     accent: '#ffd93d', sky: ['#2a1a0a','#1a0f05','#0a0500'] },
-  { id: 'shield', icon: '⚔️', name: 'Shield Wall', genre: 'Action Combat',
-    desc: 'Enemies attack at 3 heights! Match your shield to their attack height to block. Miss and take damage!',
+  { id: 'shield', icon: '⚔️', name: 'Shield Wall', genre: 'Rhythm Parry',
+    desc: 'Enemies telegraph their attacks — parry at the right height with perfect timing! Watch for feints and counter-attack!',
     accent: '#e74c3c', sky: ['#2d3436','#1a1a2e','#0a0a1e'] },
   { id: 'lock', icon: '🔒', name: 'Lock Cracker', genre: 'Puzzle',
     desc: 'Find the hidden sweet spot with your ankle. Hold steady when you feel it — the lock will crack! Precision & patience.',
     accent: '#a29bfe', sky: ['#1a1a3e','#0f0f2e','#050520'] },
   { id: 'dragon', icon: '🐉', name: 'Dragon Quest', genre: 'RPG',
-    desc: 'Turn-based monster battles! Ankle selects Attack/Defend/Magic. Read the enemy, pick your move, level up!',
+    desc: 'Strategic turn-based combat! Manage mana, read monster patterns, use combos, drink potions. Outsmart your foes!',
     accent: '#ff9f43', sky: ['#1a0a2a','#2a1a3e','#0a0520'] },
   { id: 'shadow', icon: '🕵️', name: 'Shadow Sneak', genre: 'Stealth',
-    desc: 'Sneak past searchlights! Control your height to stay in shadows. Get spotted too much and it\'s game over!',
+    desc: 'Infiltrate vertically! Dodge patterned lasers, avoid security cameras, hack terminals. Patience and timing are key.',
     accent: '#0abde3', sky: ['#0a0a1e','#050510','#020208'] }
 ];
 
@@ -178,7 +178,6 @@ let gameTime = 0;
 function showScr(id) {
   document.querySelectorAll('.scr').forEach(s => s.classList.add('off'));
   if (id) document.getElementById(id).classList.remove('off');
-  // Hide game UI when showing a screen
   if (id !== null) {
     document.getElementById('back-btn').style.display = 'none';
     document.getElementById('hud').style.display = 'none';
@@ -358,12 +357,13 @@ function loop(ts) {
 // ═══════════════════════════════════════════════
 //  GAME 1: JUNGLE JUMP 🏃 (Platformer)
 //  Auto-run, ankle = height, dodge/collect
+//  v2: Opaque backgrounds behind all emojis
 // ═══════════════════════════════════════════════
 let J = {};
 
 function initJungle() {
   J = {
-    y: H * 0.5,           // character Y
+    y: H * 0.5,
     score: 0,
     coins: 0,
     hp: 3,
@@ -379,7 +379,6 @@ function initJungle() {
     trees: [],
     dur: 120
   };
-  // Init background trees
   for (let i = 0; i < 10; i++) {
     J.trees.push({ x: rand(0, W * 2), h: rand(60, 180), shade: rand(0.1, 0.3) });
   }
@@ -390,40 +389,35 @@ function updateJungle(dt) {
   j.speed = 180 + gameTime * 1.5;
   j.scroll += j.speed * dt;
 
-  // Character Y follows ankle (up = higher on screen = lower Y value)
   const targetY = H * 0.1 + (0.5 - ankle * 0.5) * (H * 0.75);
   j.y = lerp(j.y, clamp(targetY, 50, H - 50), 6 * dt);
   j.maxROM = Math.max(j.maxROM, Math.abs(ankle) * 30);
 
-  // Spawn obstacles (at top, middle, or bottom)
   j.spawnT -= dt;
   if (j.spawnT <= 0) {
     const lane = Math.random();
     let oy, emoji, oh;
     if (lane < 0.33) {
-      oy = H * 0.82; emoji = '🌵'; oh = 50;  // ground cactus — go HIGH to dodge
+      oy = H * 0.82; emoji = '🌵'; oh = 50;
     } else if (lane < 0.66) {
-      oy = H * 0.45; emoji = '🦅'; oh = 45;  // mid eagle — go HIGH or LOW
+      oy = H * 0.45; emoji = '🦅'; oh = 45;
     } else {
-      oy = H * 0.15; emoji = '🪨'; oh = 45;  // overhead rocks — go LOW to dodge
+      oy = H * 0.15; emoji = '🪨'; oh = 45;
     }
     j.obstacles.push({ x: W + 40, y: oy, e: emoji, h: oh, hit: false, passed: false });
     j.spawnT = rand(1.2, 2.5) - Math.min(gameTime * 0.008, 0.8);
   }
 
-  // Spawn coins
   j.coinT -= dt;
   if (j.coinT <= 0) {
     j.coinList.push({ x: W + 40, y: rand(80, H - 80), got: false });
     j.coinT = rand(0.5, 1.5);
   }
 
-  // Move everything
   j.obstacles.forEach(o => o.x -= j.speed * dt);
   j.coinList.forEach(c => c.x -= j.speed * dt);
   j.trees.forEach(t => { t.x -= j.speed * 0.3 * dt; if (t.x < -100) t.x = W + rand(50, 200); });
 
-  // Collision: obstacles
   j.obstacles.forEach(o => {
     if (o.hit || o.passed) return;
     if (o.x < 90 && o.x > 30 && Math.abs(o.y - j.y) < o.h) {
@@ -438,7 +432,6 @@ function updateJungle(dt) {
     }
   });
 
-  // Collision: coins
   j.coinList.forEach(c => {
     if (!c.got && Math.abs(c.x - 65) < 30 && Math.abs(c.y - j.y) < 30) {
       c.got = true;
@@ -447,16 +440,13 @@ function updateJungle(dt) {
     }
   });
 
-  // Cleanup
   j.obstacles = j.obstacles.filter(o => o.x > -60);
   j.coinList = j.coinList.filter(c => c.x > -30);
 
-  // HUD
   let hearts = '';
   for (let i = 0; i < j.maxHP; i++) hearts += i < j.hp ? '❤️' : '🖤';
   setHud(j.score, hearts, '🪙 ' + j.coins, '', '', fmtTime(j.dur - gameTime));
 
-  // End conditions
   if (j.hp <= 0) {
     showResults('💀 Game Over!', [
       { v: j.score, l: 'Score' }, { v: j.coins, l: 'Coins' },
@@ -477,13 +467,12 @@ function drawJungle() {
   // Ground
   ctx.fillStyle = '#2d5a27';
   ctx.fillRect(0, H * 0.9, W, H * 0.1);
-  // Ground scroll lines
   ctx.fillStyle = '#1a4a1a';
   for (let i = 0; i < W + 40; i += 40) {
     ctx.fillRect((i - j.scroll * 0.5 % 40 + 40) % (W + 40) - 20, H * 0.9, 2, H * 0.1);
   }
 
-  // Trees (parallax background)
+  // Trees (parallax)
   j.trees.forEach(t => {
     ctx.fillStyle = 'rgba(30,80,20,' + t.shade + ')';
     ctx.fillRect(t.x - 8, H * 0.9 - t.h, 16, t.h);
@@ -492,37 +481,49 @@ function drawJungle() {
     ctx.fill();
   });
 
-  // Obstacles
+  // Obstacles — solid background circles + larger emoji
   j.obstacles.forEach(o => {
     if (o.hit) return;
-    ctx.font = '36px serif';
+    // Dark red background circle for danger
+    ctx.fillStyle = 'rgba(180, 30, 30, 0.9)';
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, 26, 0, Math.PI * 2);
+    ctx.fill();
+    // Emoji
+    ctx.font = '42px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    // Danger glow
-    ctx.shadowColor = '#ff4444';
-    ctx.shadowBlur = 12;
     ctx.fillText(o.e, o.x, o.y);
-    ctx.shadowBlur = 0;
   });
 
-  // Coins
+  // Coins — gold background glow circle
   j.coinList.forEach(c => {
     if (c.got) return;
-    ctx.font = '24px serif';
+    const cy = c.y + Math.sin(gameTime * 4 + c.x * 0.01) * 5;
+    // Gold glow circle
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.45)';
+    ctx.beginPath();
+    ctx.arc(c.x, cy, 18, 0, Math.PI * 2);
+    ctx.fill();
+    // Emoji
+    ctx.font = '28px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = '#ffd93d';
-    ctx.shadowBlur = 10;
-    ctx.fillText('🪙', c.x, c.y + Math.sin(gameTime * 4 + c.x * 0.01) * 5);
-    ctx.shadowBlur = 0;
+    ctx.fillText('🪙', c.x, cy);
   });
 
-  // Character
+  // Character — dark green background circle + larger emoji
   ctx.save();
   ctx.translate(65, j.y);
   const runBob = Math.sin(gameTime * 12) * 4;
   ctx.translate(0, runBob);
-  ctx.font = '40px serif';
+  // Solid dark green circle behind character
+  ctx.fillStyle = 'rgba(20, 100, 30, 0.95)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 28, 0, Math.PI * 2);
+  ctx.fill();
+  // Character emoji larger
+  ctx.font = '48px serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('🏃', 0, 0);
@@ -539,7 +540,7 @@ function drawJungle() {
     ctx.stroke();
   }
 
-  // Height guide on right edge
+  // Height guide
   ctx.fillStyle = 'rgba(107,203,119,0.2)';
   ctx.font = '600 10px Fredoka, sans-serif';
   ctx.textAlign = 'right';
@@ -551,27 +552,35 @@ function drawJungle() {
 
 // ═══════════════════════════════════════════════
 //  GAME 2: GEM MINER ⛏️ (Idle Tycoon)
-//  3 zones, hold position to mine, auto-upgrade
+//  v2: Diamond at BOTTOM, depletion/recovery mechanic
+//  Zone 0 (top) = Coal $3, Zone 1 (mid) = Gold $15, Zone 2 (bottom) = Diamond $50
 // ═══════════════════════════════════════════════
 let M = {};
 
 function initMiner() {
   M = {
-    zone: 1,           // 0=top, 1=mid, 2=bottom
+    zone: 1,
     money: 0,
-    gems: [0, 0, 0],   // diamonds, gold, coal
+    gems: [0, 0, 0],         // coal, gold, diamonds
     progress: [0, 0, 0],
-    mineSpeed: [0.3, 0.6, 1.2],   // seconds to mine 1 unit
-    gemValue: [50, 15, 3],         // value per unit
-    gemNames: ['💎 Diamond', '🪙 Gold', 'ite Coal'],
-    gemEmoji: ['💎', '🪙', '�ite'],
+    mineSpeed: [1.2, 0.6, 0.3],    // seconds to mine 1 unit (coal fast, diamond slow)
+    gemValue: [3, 15, 50],          // coal, gold, diamond
+    gemNames: ['�ite Coal', '🪙 Gold', '💎 Diamond'],
+    gemEmoji: ['⬛', '🪙', '💎'],
     level: [1, 1, 1],
     maxROM: 0,
     pickSwing: 0,
     particles: [],
     dur: 120,
     milestones: [100, 500, 1500, 5000, 15000],
-    nextMile: 0
+    nextMile: 0,
+    // Depletion mechanic
+    energy: [100, 100, 100],         // 0-100 per zone
+    depleted: [false, false, false],
+    // Drain rates per second while mining: diamond drains fastest, coal slowest
+    drainRate: [5, 8, 15],           // coal, gold, diamond (energy/sec)
+    // Recovery rate per second when NOT mining that zone
+    recoveryRate: [10, 10, 10],      // all recover at 10/sec = ~10s full recharge
   };
 }
 
@@ -579,35 +588,55 @@ function updateMiner(dt) {
   const m = M;
 
   // Determine zone from ankle
-  if (ankle > 0.25) m.zone = 0;       // top = diamonds
-  else if (ankle < -0.25) m.zone = 2; // bottom = coal
-  else m.zone = 1;                     // mid = gold
+  // ankle > 0.25 = top = coal (zone 0)
+  // ankle < -0.25 = bottom = diamond (zone 2)
+  // mid = gold (zone 1)
+  if (ankle > 0.25) m.zone = 0;
+  else if (ankle < -0.25) m.zone = 2;
+  else m.zone = 1;
 
   m.maxROM = Math.max(m.maxROM, Math.abs(ankle) * 30);
   m.pickSwing += dt * 8;
 
-  // Mine in current zone
-  const z = m.zone;
-  m.progress[z] += dt / m.mineSpeed[z];
-  if (m.progress[z] >= 1) {
-    m.progress[z] -= 1;
-    m.gems[z]++;
-    m.money += m.gemValue[z];
+  // Recovery: all zones NOT being mined recover energy
+  for (let z = 0; z < 3; z++) {
+    if (z !== m.zone) {
+      m.energy[z] = Math.min(100, m.energy[z] + m.recoveryRate[z] * dt);
+      if (m.energy[z] > 0) m.depleted[z] = false;
+    }
+  }
 
-    // Spawn particle
-    const zy = H * (0.17 + z * 0.33);
-    for (let i = 0; i < 4; i++) {
-      m.particles.push({
-        x: W * 0.5 + rand(-30, 30), y: zy + rand(-15, 15),
-        vx: rand(-60, 60), vy: rand(-80, -20),
-        life: 0.8, maxLife: 0.8, color: ['#b9f2ff', '#ffd93d', '#888'][z]
-      });
+  // Mine current zone (only if not depleted)
+  const z = m.zone;
+  if (!m.depleted[z] && m.energy[z] > 0) {
+    // Drain energy
+    m.energy[z] -= m.drainRate[z] * dt;
+    if (m.energy[z] <= 0) {
+      m.energy[z] = 0;
+      m.depleted[z] = true;
+    }
+
+    // Mine progress
+    m.progress[z] += dt / m.mineSpeed[z];
+    if (m.progress[z] >= 1) {
+      m.progress[z] -= 1;
+      m.gems[z]++;
+      m.money += m.gemValue[z];
+
+      // Spawn particles
+      const zy = H * (0.17 + z * 0.33);
+      for (let i = 0; i < 4; i++) {
+        m.particles.push({
+          x: W * 0.5 + rand(-30, 30), y: zy + rand(-15, 15),
+          vx: rand(-60, 60), vy: rand(-80, -20),
+          life: 0.8, maxLife: 0.8, color: ['#888', '#ffd93d', '#b9f2ff'][z]
+        });
+      }
     }
   }
 
   // Milestones = upgrades
   if (m.nextMile < m.milestones.length && m.money >= m.milestones[m.nextMile]) {
-    // Speed up all zones
     m.mineSpeed[0] *= 0.7;
     m.mineSpeed[1] *= 0.7;
     m.mineSpeed[2] *= 0.7;
@@ -626,12 +655,13 @@ function updateMiner(dt) {
   });
   m.particles = m.particles.filter(p => p.life > 0);
 
-  setHud('$' + m.money, 'Lvl ' + m.level[m.zone], m.gemEmoji[m.zone] + ' Mining ' + m.gemNames[m.zone], '', '', fmtTime(m.dur - gameTime));
+  const statusText = m.depleted[z] ? '⚠️ DEPLETED' : m.gemEmoji[z] + ' Mining ' + m.gemNames[z];
+  setHud('$' + m.money, 'Lvl ' + m.level[m.zone], statusText, '', '', fmtTime(m.dur - gameTime));
 
   if (gameTime >= m.dur) {
     showResults('⛏️ Shift Complete!', [
       { v: '$' + m.money, l: 'Total Earned' },
-      { v: m.gems[0], l: '💎 Diamonds' },
+      { v: m.gems[2], l: '💎 Diamonds' },
       { v: m.gems[1], l: '🪙 Gold' },
       { v: m.maxROM.toFixed(0) + '°', l: 'Max ROM' }
     ]);
@@ -641,10 +671,10 @@ function updateMiner(dt) {
 function drawMiner() {
   const m = M;
 
-  // Draw 3 zones
-  const zoneColors = ['rgba(100,150,255,0.12)', 'rgba(255,215,0,0.12)', 'rgba(150,100,50,0.12)'];
-  const zoneEmoji = ['💎', '🪙', '�ite'];
-  const zoneNames = ['DIAMOND', 'GOLD', 'COAL'];
+  // Zone colors: coal (brown/gray), gold (gold), diamond (blue)
+  const zoneColors = ['rgba(150,100,50,0.12)', 'rgba(255,215,0,0.12)', 'rgba(100,150,255,0.12)'];
+  const zoneEmoji = ['⬛', '🪙', '💎'];
+  const zoneNames = ['COAL', 'GOLD', 'DIAMOND'];
 
   for (let z = 0; z < 3; z++) {
     const zy = H * (0.05 + z * 0.33);
@@ -655,9 +685,15 @@ function drawMiner() {
     ctx.fillStyle = active ? zoneColors[z].replace('0.12', '0.25') : zoneColors[z];
     ctx.fillRect(0, zy, W, zh);
 
-    // Zone border if active
+    // Depleted overlay
+    if (m.depleted[z]) {
+      ctx.fillStyle = 'rgba(50, 0, 0, 0.4)';
+      ctx.fillRect(0, zy, W, zh);
+    }
+
+    // Active zone border
     if (active) {
-      ctx.strokeStyle = GD.accent;
+      ctx.strokeStyle = m.depleted[z] ? '#ff4444' : GD.accent;
       ctx.lineWidth = 2;
       ctx.strokeRect(2, zy + 1, W - 4, zh - 2);
     }
@@ -671,6 +707,7 @@ function drawMiner() {
     // Gem count
     ctx.font = '700 20px Fredoka, sans-serif';
     ctx.textAlign = 'right';
+    ctx.fillStyle = active ? '#fff' : 'rgba(255,255,255,0.3)';
     ctx.fillText(zoneEmoji[z] + ' ' + m.gems[z], W - 15, zy + 25);
 
     // Value per gem
@@ -678,13 +715,44 @@ function drawMiner() {
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.fillText('$' + m.gemValue[z] + '/gem', W - 15, zy + 42);
 
-    // Progress bar
+    // Energy bar background
+    const eBarW = W - 40;
+    const eBarX = 20;
+    const eBarY = zy + zh - 48;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(eBarX, eBarY, eBarW, 8);
+    // Energy bar fill
+    const ePct = m.energy[z] / 100;
+    let eColor;
+    if (m.depleted[z]) eColor = '#ff4444';
+    else if (ePct < 0.3) eColor = '#ff9f43';
+    else eColor = ['#aaa', '#ffd93d', '#6cb4ee'][z];
+    ctx.fillStyle = eColor;
+    ctx.fillRect(eBarX, eBarY, eBarW * ePct, 8);
+    // Energy label
+    ctx.font = '600 9px Fredoka, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillText('ENERGY ' + Math.round(m.energy[z]) + '%', eBarX, eBarY - 4);
+
+    // DEPLETED text
+    if (m.depleted[z]) {
+      ctx.font = '700 18px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ff4444';
+      const pulse = 0.6 + Math.sin(gameTime * 4) * 0.4;
+      ctx.globalAlpha = pulse;
+      ctx.fillText('⚠️ DEPLETED — RECHARGING', W / 2, zy + zh / 2);
+      ctx.globalAlpha = 1;
+    }
+
+    // Mining progress bar
     const barW = W - 40;
     const barX = 20;
     const barY = zy + zh - 25;
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
     ctx.fillRect(barX, barY, barW, 10);
-    if (active) {
+    if (active && !m.depleted[z]) {
       ctx.fillStyle = GD.accent;
       ctx.fillRect(barX, barY, barW * m.progress[z], 10);
     }
@@ -695,10 +763,10 @@ function drawMiner() {
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.fillText('Lvl ' + m.level[z], 20, zy + zh - 35);
 
-    // Pickaxe animation in active zone
-    if (active) {
+    // Pickaxe animation in active zone (only if not depleted)
+    if (active && !m.depleted[z]) {
       const px = W * 0.5;
-      const py = zy + zh * 0.5;
+      const py = zy + zh * 0.45;
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(Math.sin(m.pickSwing) * 0.5);
@@ -729,37 +797,94 @@ function drawMiner() {
 
 
 // ═══════════════════════════════════════════════
-//  GAME 3: SHIELD WALL ⚔️ (Action Combat)
-//  Block attacks at 3 heights, combo system
+//  GAME 3: SHIELD WALL ⚔️ (Rhythm/Timing Parry)
+//  v2: Complete redesign — telegraph, timing, feints, counters
 // ═══════════════════════════════════════════════
 let S = {};
 
 function initShield() {
   S = {
     shieldY: H * 0.5,
+    shieldZone: 1,           // 0=top, 1=mid, 2=bot
     hp: 5,
     maxHP: 5,
     score: 0,
     combo: 0,
     bestCombo: 0,
     enemies: [],
-    spawnT: 0,
+    spawnT: 1.5,
     blocked: 0,
+    perfectBlocks: 0,
     totalEnemies: 0,
     maxROM: 0,
     wave: 1,
     waveT: 0,
     particles: [],
+    flashTimer: 0,           // screen flash on perfect block
+    flashColor: '',
+    // Counter-attack
+    counterActive: false,
+    counterTimer: 0,
+    counterZone: -1,         // zone player was in during perfect block
+    counterScore: 0,
     dur: 120
   };
+}
+
+function spawnShieldEnemy() {
+  const s = S;
+  const lane = Math.floor(Math.random() * 3);
+  const laneY = H * (0.18 + lane * 0.3);
+
+  // Feint: at higher waves, chance to telegraph wrong lane
+  let telegraphLane = lane;
+  const feintChance = Math.min(0.4, (s.wave - 2) * 0.1);
+  let isFeint = false;
+  if (s.wave >= 3 && Math.random() < feintChance) {
+    const options = [0, 1, 2].filter(l => l !== lane);
+    telegraphLane = options[Math.floor(Math.random() * options.length)];
+    isFeint = true;
+  }
+
+  const types = [
+    { e: '🦇', name: 'Bat', chargeTime: 2.0 - Math.min(s.wave * 0.08, 0.6) },
+    { e: '🧟', name: 'Zombie', chargeTime: 2.5 - Math.min(s.wave * 0.08, 0.8) },
+    { e: '👹', name: 'Ogre', chargeTime: 2.2 - Math.min(s.wave * 0.08, 0.7) },
+    { e: '🐍', name: 'Serpent', chargeTime: 1.8 - Math.min(s.wave * 0.08, 0.5) }
+  ];
+  const type = types[Math.floor(Math.random() * types.length)];
+
+  s.enemies.push({
+    x: W + 30,
+    targetX: W * 0.35 + rand(-20, 20),   // where they stop to charge
+    y: laneY,
+    lane: lane,
+    telegraphLane: telegraphLane,
+    isFeint: isFeint,
+    e: type.e,
+    name: type.name,
+    speed: 200 + s.wave * 10,
+    chargeTime: type.chargeTime,
+    chargeProgress: 0,
+    phase: 'approach',      // approach, charging, attacking, resolved
+    resolved: false,
+    attackResult: '',       // 'perfect', 'good', 'miss'
+    resultTimer: 0,
+    size: 36
+  });
+  s.totalEnemies++;
 }
 
 function updateShield(dt) {
   const s = S;
 
-  // Shield follows ankle
-  const targetY = H * 0.1 + (0.5 - ankle * 0.5) * (H * 0.8);
-  s.shieldY = lerp(s.shieldY, clamp(targetY, 60, H - 60), 8 * dt);
+  // Shield follows ankle — snaps to 3 zones
+  if (ankle > 0.25) s.shieldZone = 0;
+  else if (ankle < -0.25) s.shieldZone = 2;
+  else s.shieldZone = 1;
+
+  const targetY = H * (0.18 + s.shieldZone * 0.3);
+  s.shieldY = lerp(s.shieldY, targetY, 10 * dt);
   s.maxROM = Math.max(s.maxROM, Math.abs(ankle) * 30);
 
   // Waves
@@ -769,66 +894,127 @@ function updateShield(dt) {
   // Spawn enemies
   s.spawnT -= dt;
   if (s.spawnT <= 0) {
-    const lane = Math.floor(Math.random() * 3); // 0=top, 1=mid, 2=bot
-    const ey = H * (0.18 + lane * 0.3);
-    const types = [
-      { e: '🦇', spd: 140 + s.wave * 15, name: 'Bat' },
-      { e: '🧟', spd: 100 + s.wave * 10, name: 'Zombie' },
-      { e: '👹', spd: 120 + s.wave * 12, name: 'Ogre' },
-      { e: '🐍', spd: 160 + s.wave * 18, name: 'Serpent' }
-    ];
-    const type = types[Math.floor(Math.random() * types.length)];
-    s.enemies.push({
-      x: W + 30, y: ey, e: type.e, speed: type.spd, resolved: false, size: 36
-    });
-    s.totalEnemies++;
-    s.spawnT = rand(1.0, 2.2) - Math.min(s.wave * 0.1, 0.6);
+    spawnShieldEnemy();
+    s.spawnT = rand(2.0, 3.5) - Math.min(s.wave * 0.15, 1.0);
   }
 
-  // Move enemies
+  // Flash timer
+  if (s.flashTimer > 0) s.flashTimer -= dt;
+
+  // Counter-attack timer
+  if (s.counterActive) {
+    s.counterTimer -= dt;
+    if (s.counterTimer <= 0) {
+      s.counterActive = false;
+    } else if (s.shieldZone !== s.counterZone) {
+      // Player moved to different zone — counter success!
+      s.counterActive = false;
+      s.score += 50;
+      s.counterScore++;
+      // Counter particles
+      for (let i = 0; i < 12; i++) {
+        s.particles.push({
+          x: 70 + rand(-10, 10), y: s.shieldY + rand(-10, 10),
+          vx: rand(50, 200), vy: rand(-100, 100),
+          life: 0.8, maxLife: 0.8, color: '#ffd93d', text: '⚡'
+        });
+      }
+    }
+  }
+
+  // Update enemies
   s.enemies.forEach(en => {
-    if (en.resolved) return;
-    en.x -= en.speed * dt;
+    if (en.resolved) {
+      en.resultTimer -= dt;
+      return;
+    }
 
-    // Hit the shield line (x = 80)
-    if (en.x <= 85 && en.x >= 40) {
-      en.resolved = true;
-      const dy = Math.abs(en.y - s.shieldY);
+    if (en.phase === 'approach') {
+      en.x -= en.speed * dt;
+      if (en.x <= en.targetX) {
+        en.phase = 'charging';
+        en.x = en.targetX;
+      }
+    } else if (en.phase === 'charging') {
+      en.chargeProgress += dt / en.chargeTime;
 
-      if (dy < 60) {
-        // BLOCKED!
-        s.blocked++;
-        s.combo++;
-        if (s.combo > s.bestCombo) s.bestCombo = s.combo;
-        const pts = 25 * Math.min(s.combo, 5);
-        s.score += pts;
-        // Green particles
-        for (let i = 0; i < 8; i++) {
-          s.particles.push({
-            x: 80 + rand(-10, 10), y: en.y + rand(-10, 10),
-            vx: rand(-100, -30), vy: rand(-80, 80),
-            life: 0.6, maxLife: 0.6, color: '#6bcb77'
-          });
+      // Feint reveal: show real lane in final 30% of charge
+      if (en.isFeint && en.chargeProgress > 0.7) {
+        en.telegraphLane = en.lane; // reveal true lane
+      }
+
+      if (en.chargeProgress >= 1.0) {
+        en.phase = 'attacking';
+        // Check if player is at the right zone
+        const playerAtLane = s.shieldZone === en.lane;
+        const timingError = Math.abs(en.chargeProgress - 1.0);
+
+        if (playerAtLane) {
+          if (timingError < 0.15) {
+            // Perfect block!
+            en.attackResult = 'perfect';
+            s.perfectBlocks++;
+            s.blocked++;
+            s.combo += 3;
+            if (s.combo > s.bestCombo) s.bestCombo = s.combo;
+            s.score += 75;
+            s.flashTimer = 0.3;
+            s.flashColor = '#ffd93d';
+
+            // Activate counter-attack prompt
+            s.counterActive = true;
+            s.counterTimer = 1.2;
+            s.counterZone = s.shieldZone;
+
+            // Golden particles
+            for (let i = 0; i < 12; i++) {
+              s.particles.push({
+                x: en.x + rand(-10, 10), y: en.y + rand(-10, 10),
+                vx: rand(-150, 150), vy: rand(-150, 150),
+                life: 0.7, maxLife: 0.7, color: '#ffd93d'
+              });
+            }
+          } else {
+            // Good block
+            en.attackResult = 'good';
+            s.blocked++;
+            s.combo++;
+            if (s.combo > s.bestCombo) s.bestCombo = s.combo;
+            s.score += 25;
+            // Green particles
+            for (let i = 0; i < 8; i++) {
+              s.particles.push({
+                x: en.x + rand(-10, 10), y: en.y + rand(-10, 10),
+                vx: rand(-100, 100), vy: rand(-100, 100),
+                life: 0.5, maxLife: 0.5, color: '#6bcb77'
+              });
+            }
+          }
+        } else {
+          // Miss — took damage
+          en.attackResult = 'miss';
+          s.hp--;
+          s.combo = 0;
+          s.score = Math.max(0, s.score - 15);
+          s.flashTimer = 0.2;
+          s.flashColor = '#ff4444';
+          // Red particles
+          for (let i = 0; i < 8; i++) {
+            s.particles.push({
+              x: 70 + rand(-10, 10), y: s.shieldY + rand(-15, 15),
+              vx: rand(-80, -20), vy: rand(-60, 60),
+              life: 0.5, maxLife: 0.5, color: '#ff4444'
+            });
+          }
         }
-      } else {
-        // HIT — took damage
-        s.hp--;
-        s.combo = 0;
-        s.score = Math.max(0, s.score - 15);
-        // Red particles
-        for (let i = 0; i < 8; i++) {
-          s.particles.push({
-            x: 80, y: s.shieldY + rand(-15, 15),
-            vx: rand(-80, -20), vy: rand(-60, 60),
-            life: 0.5, maxLife: 0.5, color: '#ff4444'
-          });
-        }
+        en.resolved = true;
+        en.resultTimer = 1.0;
       }
     }
   });
 
-  // Cleanup
-  s.enemies = s.enemies.filter(en => en.x > -50 || !en.resolved);
+  // Cleanup resolved enemies after result display
+  s.enemies = s.enemies.filter(en => !en.resolved || en.resultTimer > 0);
 
   // Particles
   s.particles.forEach(p => {
@@ -845,14 +1031,14 @@ function updateShield(dt) {
 
   if (s.hp <= 0) {
     showResults('💀 Overrun!', [
-      { v: s.score, l: 'Score' }, { v: s.blocked + '/' + s.totalEnemies, l: 'Blocked' },
+      { v: s.score, l: 'Score' }, { v: s.perfectBlocks, l: 'Perfect Blocks' },
       { v: s.bestCombo, l: 'Best Combo' }, { v: s.maxROM.toFixed(0) + '°', l: 'Max ROM' }
     ]);
   }
   if (gameTime >= s.dur) {
     const pct = s.totalEnemies ? Math.round(s.blocked / s.totalEnemies * 100) : 100;
     showResults(pct >= 80 ? '⚔️ Legendary Defender!' : '⚔️ Battle Over!', [
-      { v: s.score, l: 'Score' }, { v: s.blocked + '/' + s.totalEnemies, l: 'Blocked' },
+      { v: s.score, l: 'Score' }, { v: s.perfectBlocks, l: 'Perfect Blocks' },
       { v: s.bestCombo, l: 'Best Combo' }, { v: s.maxROM.toFixed(0) + '°', l: 'Max ROM' }
     ]);
   }
@@ -884,20 +1070,76 @@ function drawShield() {
 
   // Enemies
   s.enemies.forEach(en => {
+    if (en.resolved && en.resultTimer > 0) {
+      // Show result text
+      const alpha = en.resultTimer;
+      ctx.globalAlpha = alpha;
+      const label = en.attackResult === 'perfect' ? '✨ PERFECT!' : (en.attackResult === 'good' ? '🛡️ BLOCKED' : '💥 HIT!');
+      const col = en.attackResult === 'perfect' ? '#ffd93d' : (en.attackResult === 'good' ? '#6bcb77' : '#ff4444');
+      drawText(label, en.x, en.y - 30, 14, col);
+      ctx.globalAlpha = 1;
+      return;
+    }
     if (en.resolved) return;
+
+    // Telegraph indicator — arrow showing which lane they'll attack
+    const telegraphY = H * (0.18 + en.telegraphLane * 0.3);
+    if (en.phase === 'charging') {
+      // Pulsing arrow at telegraph lane
+      const pulse = 0.4 + Math.sin(gameTime * 8) * 0.3;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = en.isFeint && en.chargeProgress <= 0.7 ? '#ff9f43' : '#ff4444';
+      // Arrow pointing left toward shield
+      ctx.beginPath();
+      ctx.moveTo(en.x - 35, telegraphY);
+      ctx.lineTo(en.x - 20, telegraphY - 12);
+      ctx.lineTo(en.x - 20, telegraphY + 12);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Charge bar above enemy
+      const barW = 50;
+      const barX = en.x - barW / 2;
+      const barY = en.y - 35;
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillRect(barX, barY, barW, 6);
+      // Fill — goes from green to yellow to red
+      const pct = en.chargeProgress;
+      const r = Math.round(255 * pct);
+      const g = Math.round(255 * (1 - pct));
+      ctx.fillStyle = `rgb(${r},${g},50)`;
+      ctx.fillRect(barX, barY, barW * pct, 6);
+
+      // Charge circle around enemy
+      ctx.strokeStyle = `rgba(${r},${g},50,0.5)`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(en.x, en.y, 25, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
+      ctx.stroke();
+    }
+
+    // Enemy emoji
     ctx.font = en.size + 'px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    // Red glow intensifies as charge fills
+    const glowIntensity = en.phase === 'charging' ? 8 + en.chargeProgress * 20 : 8;
     ctx.shadowColor = '#ff4444';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = glowIntensity;
     ctx.fillText(en.e, en.x, en.y);
     ctx.shadowBlur = 0;
+
+    // Feint warning (subtle) at higher waves
+    if (en.isFeint && en.phase === 'charging' && en.chargeProgress <= 0.7) {
+      ctx.font = '600 9px Fredoka, sans-serif';
+      ctx.fillStyle = 'rgba(255,159,67,0.6)';
+      ctx.fillText('⚠️', en.x + 22, en.y - 18);
+    }
   });
 
   // Shield
   ctx.save();
   ctx.translate(70, s.shieldY);
-  // Shield glow
   ctx.shadowColor = s.combo >= 5 ? '#ffd93d' : GD.accent;
   ctx.shadowBlur = 20;
   ctx.font = '44px serif';
@@ -906,6 +1148,14 @@ function drawShield() {
   ctx.fillText('🛡️', 0, 0);
   ctx.shadowBlur = 0;
   ctx.restore();
+
+  // Counter-attack prompt
+  if (s.counterActive) {
+    const pulse = 0.5 + Math.sin(gameTime * 12) * 0.5;
+    ctx.globalAlpha = pulse;
+    drawText('⚡ COUNTER! Move to different zone! ⚡', W / 2, H * 0.5, 16, '#ffd93d');
+    ctx.globalAlpha = 1;
+  }
 
   // Particles
   s.particles.forEach(p => {
@@ -916,6 +1166,14 @@ function drawShield() {
     ctx.fill();
   });
   ctx.globalAlpha = 1;
+
+  // Screen flash
+  if (s.flashTimer > 0) {
+    ctx.fillStyle = s.flashColor === '#ffd93d'
+      ? `rgba(255,217,61,${s.flashTimer * 0.4})`
+      : `rgba(255,68,68,${s.flashTimer * 0.5})`;
+    ctx.fillRect(0, 0, W, H);
+  }
 }
 
 
@@ -931,14 +1189,14 @@ function initLock() {
     lock: 1,
     tumbler: 0,
     totalTumblers: 3,
-    sweetSpot: rand(-0.7, 0.7),   // ankle position
-    sweetSize: 0.2,                 // tolerance
+    sweetSpot: rand(-0.7, 0.7),
+    sweetSize: 0.2,
     holdTime: 0,
-    holdNeeded: 2.0,                // seconds to crack
+    holdNeeded: 2.0,
     cracked: [],
     maxROM: 0,
     totalCracked: 0,
-    proximity: 0,                   // 0-1, how close to sweet spot
+    proximity: 0,
     particles: [],
     dur: 120
   };
@@ -956,16 +1214,13 @@ function updateLock(dt) {
   const l = L;
   l.maxROM = Math.max(l.maxROM, Math.abs(ankle) * 30);
 
-  // Calculate proximity to sweet spot
   const dist = Math.abs(ankle - l.sweetSpot);
   l.proximity = clamp(1 - dist / 0.5, 0, 1);
 
-  // In the sweet zone?
   const inZone = dist < l.sweetSize;
 
   if (inZone) {
     l.holdTime += dt;
-    // Crackling particles
     if (Math.random() < dt * 15) {
       const angle = rand(0, Math.PI * 2);
       l.particles.push({
@@ -976,17 +1231,15 @@ function updateLock(dt) {
       });
     }
   } else {
-    l.holdTime = Math.max(0, l.holdTime - dt * 1.5); // Slowly lose progress if outside
+    l.holdTime = Math.max(0, l.holdTime - dt * 1.5);
   }
 
-  // Tumbler cracked!
   if (l.holdTime >= l.holdNeeded) {
     l.cracked.push(l.tumbler);
     l.tumbler++;
     l.totalCracked++;
     l.score += Math.round(100 + (l.holdNeeded - 0.5) * 50);
 
-    // Burst particles
     for (let i = 0; i < 20; i++) {
       const a = Math.PI * 2 * i / 20;
       l.particles.push({
@@ -997,7 +1250,6 @@ function updateLock(dt) {
     }
 
     if (l.tumbler >= l.totalTumblers) {
-      // Lock complete! Next lock
       l.lock++;
       l.tumbler = 0;
       l.totalTumblers = Math.min(6, 3 + Math.floor(l.lock / 2));
@@ -1007,7 +1259,6 @@ function updateLock(dt) {
     newTumbler();
   }
 
-  // Particles
   l.particles.forEach(p => {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
@@ -1027,26 +1278,21 @@ function updateLock(dt) {
 
 function drawLock() {
   const l = L;
-
-  // Big lock circle
   const cx2 = W / 2;
   const cy2 = H / 2;
   const R = Math.min(W, H) * 0.3;
 
-  // Lock body
   ctx.fillStyle = 'rgba(255,255,255,0.05)';
   ctx.beginPath();
   ctx.arc(cx2, cy2, R + 20, 0, Math.PI * 2);
   ctx.fill();
 
-  // Outer ring
   ctx.strokeStyle = 'rgba(255,255,255,0.15)';
   ctx.lineWidth = 8;
   ctx.beginPath();
   ctx.arc(cx2, cy2, R, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Proximity glow ring
   if (l.proximity > 0.3) {
     const glow = (l.proximity - 0.3) / 0.7;
     ctx.strokeStyle = `rgba(162,155,254,${glow * 0.5})`;
@@ -1059,7 +1305,6 @@ function drawLock() {
     ctx.shadowBlur = 0;
   }
 
-  // Hold progress arc
   if (l.holdTime > 0) {
     const pct = l.holdTime / l.holdNeeded;
     ctx.strokeStyle = '#a29bfe';
@@ -1072,7 +1317,6 @@ function drawLock() {
     ctx.shadowBlur = 0;
   }
 
-  // Tumbler indicators (dots around the lock)
   for (let i = 0; i < l.totalTumblers; i++) {
     const a = -Math.PI / 2 + (Math.PI * 2 * i / l.totalTumblers);
     const tx = cx2 + Math.cos(a) * (R + 35);
@@ -1083,7 +1327,6 @@ function drawLock() {
     ctx.fill();
   }
 
-  // Dial indicator (your position)
   const dialAngle = -Math.PI / 2 + (ankle + 1) / 2 * Math.PI * 2;
   const dx = cx2 + Math.cos(dialAngle) * R;
   const dy = cy2 + Math.sin(dialAngle) * R;
@@ -1095,13 +1338,11 @@ function drawLock() {
   ctx.fill();
   ctx.shadowBlur = 0;
 
-  // Center text
   ctx.font = '48px serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('🔒', cx2, cy2);
 
-  // Proximity feedback text
   const dist = Math.abs(ankle - l.sweetSpot);
   let hint = 'Searching...';
   let hColor = 'rgba(255,255,255,0.3)';
@@ -1114,7 +1355,6 @@ function drawLock() {
   ctx.fillStyle = hColor;
   ctx.fillText(hint, cx2, cy2 + R + 65);
 
-  // Particles
   l.particles.forEach(p => {
     ctx.globalAlpha = p.life / p.maxLife;
     ctx.fillStyle = p.color;
@@ -1128,7 +1368,7 @@ function drawLock() {
 
 // ═══════════════════════════════════════════════
 //  GAME 5: DRAGON QUEST 🐉 (RPG / Turn-based)
-//  RPS combat, ankle selects action, level up
+//  v2: Mana, monster tells, combos, potions, crits, AI
 // ═══════════════════════════════════════════════
 let D = {};
 
@@ -1138,12 +1378,22 @@ function initDragon() {
     playerHP: 50, playerMaxHP: 50,
     playerAtk: 10, playerDef: 5,
     playerLvl: 1, playerXP: 0, xpNeeded: 30,
+    // Mana system
+    mana: 30, maxMana: 30,
+    // Potions
+    potions: 3,
+    potionHoldTime: 0,
+    potionHoldNeeded: 1.5,
+    // Monster
     monsterHP: 0, monsterMaxHP: 0,
     monsterName: '', monsterEmoji: '',
-    monsterMove: -1,   // 0=atk, 1=def, 2=mag
+    monsterType: '',
+    monsterMove: -1,
+    monsterTendency: [0.33, 0.33, 0.34], // atk/def/mag weights
+    monsterTellText: '',
     playerMove: -1,
-    phase: 'select',    // select, resolve, win, dead
-    selectZone: 1,      // 0=attack, 1=defend, 2=magic
+    phase: 'select',
+    selectZone: 1,       // 0=attack, 1=defend, 2=magic, 3=potion
     lockProgress: 0,
     phaseTimer: 0,
     monstersSlain: 0,
@@ -1151,19 +1401,26 @@ function initDragon() {
     resolveText: '',
     resolveColor: '',
     dur: 180,
-    battleLog: []
+    // Combo tracking: last 3 moves
+    moveHistory: [],
+    versatilityBonus: false,
+    // Momentum: won last round?
+    lastRoundWin: false,
+    criticalHit: false,
+    // Monster AI: track player's picks
+    playerPickCounts: [0, 0, 0], // atk, def, mag
   };
   spawnMonster();
 }
 
 function spawnMonster() {
   const monsters = [
-    { e: '🐺', n: 'Wolf', hp: 25, atk: 8 },
-    { e: '🧟', n: 'Zombie', hp: 35, atk: 6 },
-    { e: '👹', n: 'Ogre', hp: 45, atk: 10 },
-    { e: '🐲', n: 'Drake', hp: 55, atk: 12 },
-    { e: '🧙', n: 'Dark Mage', hp: 40, atk: 15 },
-    { e: '🐉', n: 'Dragon', hp: 70, atk: 14 }
+    { e: '🐺', n: 'Wolf', type: 'wolf', hp: 25, atk: 8, tendency: [0.6, 0.2, 0.2], tell: 'The wolf snarls aggressively... favors Attack.' },
+    { e: '🧟', n: 'Zombie', type: 'zombie', hp: 35, atk: 6, tendency: [0.2, 0.6, 0.2], tell: 'The zombie lumbers defensively... favors Defend.' },
+    { e: '👹', n: 'Ogre', type: 'ogre', hp: 45, atk: 10, tendency: [0.45, 0.35, 0.2], tell: 'The ogre flexes its muscles... favors brute force.' },
+    { e: '🧙', n: 'Dark Mage', type: 'mage', hp: 40, atk: 15, tendency: [0.15, 0.35, 0.5], tell: 'The mage\'s eyes glow with arcane energy... favors Magic.' },
+    { e: '🐲', n: 'Drake', type: 'drake', hp: 55, atk: 12, tendency: [0.35, 0.35, 0.3], tell: 'The drake studies you carefully... balanced fighter.' },
+    { e: '🐉', n: 'Dragon', type: 'dragon', hp: 70, atk: 14, tendency: [0.33, 0.33, 0.34], tell: 'The dragon is unpredictable... adapts to your strategy.' }
   ];
   const tier = Math.min(monsters.length - 1, Math.floor(D.monstersSlain / 2));
   const pool = monsters.slice(0, tier + 2);
@@ -1173,10 +1430,43 @@ function spawnMonster() {
   D.monsterMaxHP = D.monsterHP;
   D.monsterName = m.n;
   D.monsterEmoji = m.e;
+  D.monsterType = m.type;
   D.monsterAtk = Math.round(m.atk * scale);
   D.monsterMove = -1;
+  D.monsterTendency = [...m.tendency];
+  D.monsterTellText = m.tell;
   D.phase = 'select';
   D.lockProgress = 0;
+  D.versatilityBonus = false;
+  D.criticalHit = false;
+}
+
+function getMonsterMove() {
+  const d = D;
+  // Monster AI: adjust tendency based on player's most-picked move
+  const total = d.playerPickCounts[0] + d.playerPickCounts[1] + d.playerPickCounts[2];
+  let tendency = [...d.monsterTendency];
+
+  if (total >= 3) {
+    // Find player's most used move and counter it
+    const playerPrefs = d.playerPickCounts.map(c => c / total);
+    // Counter: if player picks atk a lot, monster picks def more
+    // atk(0) countered by def(1), def(1) countered by mag(2), mag(2) countered by atk(0)
+    const counterWeight = 0.3; // how much to shift
+    for (let i = 0; i < 3; i++) {
+      const counterMove = (i + 1) % 3;
+      tendency[counterMove] += playerPrefs[i] * counterWeight;
+    }
+    // Normalize
+    const sum = tendency[0] + tendency[1] + tendency[2];
+    tendency = tendency.map(t => t / sum);
+  }
+
+  // Weighted random pick
+  const roll = Math.random();
+  if (roll < tendency[0]) return 0;
+  if (roll < tendency[0] + tendency[1]) return 1;
+  return 2;
 }
 
 function updateDragon(dt) {
@@ -1184,19 +1474,64 @@ function updateDragon(dt) {
   d.maxROM = Math.max(d.maxROM, Math.abs(ankle) * 30);
 
   if (d.phase === 'select') {
-    // Zone selection
-    if (ankle > 0.25) d.selectZone = 0;       // Attack (top)
-    else if (ankle < -0.25) d.selectZone = 2;  // Magic (bottom)
-    else d.selectZone = 1;                      // Defend (mid)
+    // 4 zones: attack (top), defend (mid-high), magic (mid-low), potion (bottom)
+    if (ankle > 0.35) d.selectZone = 0;        // Attack
+    else if (ankle > 0) d.selectZone = 1;       // Defend
+    else if (ankle > -0.35) d.selectZone = 2;   // Magic
+    else d.selectZone = 3;                       // Potion
 
-    // Lock in by holding
-    d.lockProgress += dt * 0.7;
-    if (d.lockProgress >= 1) {
-      d.playerMove = d.selectZone;
-      d.monsterMove = Math.floor(Math.random() * 3);
-      d.phase = 'resolve';
-      d.phaseTimer = 0;
-      resolveRPS();
+    // Potion zone: requires holding for 1.5s
+    if (d.selectZone === 3 && d.potions > 0) {
+      d.potionHoldTime += dt;
+      d.lockProgress = 0; // don't lock normal moves while holding potion zone
+      if (d.potionHoldTime >= d.potionHoldNeeded) {
+        // Drink potion!
+        d.potions--;
+        const healAmt = Math.round(d.playerMaxHP * 0.3);
+        d.playerHP = Math.min(d.playerMaxHP, d.playerHP + healAmt);
+        d.resolveText = '🧪 Drank potion! Healed ' + healAmt + ' HP!';
+        d.resolveColor = '#6bcb77';
+        d.phase = 'resolve';
+        d.phaseTimer = 0;
+        d.potionHoldTime = 0;
+        // Monster still gets a free turn
+        d.monsterMove = getMonsterMove();
+        const dmg = Math.max(1, d.monsterAtk - d.playerDef + Math.round(Math.random() * 3));
+        d.playerHP = Math.max(0, d.playerHP - dmg);
+        d.resolveText += ' Monster hits for ' + dmg + '!';
+        // Regen mana
+        d.mana = Math.min(d.maxMana, d.mana + 5);
+        return;
+      }
+    } else {
+      d.potionHoldTime = 0;
+    }
+
+    // Normal move lock-in
+    if (d.selectZone < 3) {
+      // Check mana for magic
+      if (d.selectZone === 2 && d.mana < 10) {
+        // Can't select magic — not enough mana, don't progress lock
+        d.lockProgress = 0;
+      } else {
+        d.lockProgress += dt * 0.7;
+      }
+
+      if (d.lockProgress >= 1) {
+        d.playerMove = d.selectZone;
+        d.playerPickCounts[d.playerMove]++;
+
+        // Deduct mana for magic
+        if (d.playerMove === 2) d.mana -= 10;
+
+        // Regen mana each turn
+        d.mana = Math.min(d.maxMana, d.mana + 5);
+
+        d.monsterMove = getMonsterMove();
+        d.phase = 'resolve';
+        d.phaseTimer = 0;
+        resolveRPS();
+      }
     }
   } else if (d.phase === 'resolve') {
     d.phaseTimer += dt;
@@ -1218,7 +1553,6 @@ function updateDragon(dt) {
       d.monstersSlain++;
       d.playerXP += 20 + d.monstersSlain * 5;
       d.score += 100 + d.monstersSlain * 25;
-      // Level up check
       while (d.playerXP >= d.xpNeeded) {
         d.playerXP -= d.xpNeeded;
         d.playerLvl++;
@@ -1226,6 +1560,8 @@ function updateDragon(dt) {
         d.playerHP = d.playerMaxHP;
         d.playerAtk += 3;
         d.playerDef += 2;
+        d.maxMana += 5;
+        d.mana = d.maxMana;
         d.xpNeeded = Math.round(d.xpNeeded * 1.5);
       }
       spawnMonster();
@@ -1250,27 +1586,59 @@ function resolveRPS() {
   const mm = d.monsterMove;
   const moveNames = ['⚔️ Attack', '🛡️ Defend', '✨ Magic'];
 
-  // 0=Atk beats 2=Mag, 1=Def beats 0=Atk, 2=Mag beats 1=Def
+  // Track move history for versatility bonus
+  d.moveHistory.push(pm);
+  if (d.moveHistory.length > 3) d.moveHistory.shift();
+
+  // Check versatility bonus: all 3 different moves in last 3 turns
+  d.versatilityBonus = false;
+  if (d.moveHistory.length >= 3) {
+    const unique = new Set(d.moveHistory);
+    if (unique.size === 3) {
+      d.versatilityBonus = true;
+    }
+  }
+
+  // Check critical: won last round AND winning this round
+  d.criticalHit = false;
+  const playerWins = (pm === 0 && mm === 2) || (pm === 1 && mm === 0) || (pm === 2 && mm === 1);
+
   if (pm === mm) {
-    // Draw — both take small damage
+    // Draw
     const dmg = Math.round(d.monsterAtk * 0.3);
     d.playerHP -= dmg;
     d.monsterHP -= Math.round(d.playerAtk * 0.3);
     d.resolveText = 'CLASH! Both take ' + dmg + ' dmg';
     d.resolveColor = '#ffd93d';
-  } else if ((pm === 0 && mm === 2) || (pm === 1 && mm === 0) || (pm === 2 && mm === 1)) {
+    d.lastRoundWin = false;
+  } else if (playerWins) {
     // Player wins
-    const dmg = d.playerAtk + Math.round(Math.random() * 5);
+    let dmg = d.playerAtk + Math.round(Math.random() * 5);
+    // Magic does more base damage
+    if (pm === 2) dmg = Math.round(dmg * 1.3);
+    // Critical hit?
+    if (d.lastRoundWin) {
+      dmg = Math.round(dmg * 1.5);
+      d.criticalHit = true;
+    }
+    // Versatility bonus
+    if (d.versatilityBonus) {
+      dmg = Math.round(dmg * 1.3);
+    }
     d.monsterHP -= dmg;
     d.resolveText = moveNames[pm] + ' beats ' + moveNames[mm] + '! -' + dmg + ' HP!';
+    if (d.criticalHit) d.resolveText += ' CRIT!';
+    if (d.versatilityBonus) d.resolveText += ' COMBO!';
     d.resolveColor = '#6bcb77';
     d.score += 30;
+    d.lastRoundWin = true;
   } else {
     // Monster wins
     const dmg = Math.max(1, d.monsterAtk - d.playerDef + Math.round(Math.random() * 5));
     d.playerHP -= dmg;
     d.resolveText = moveNames[mm] + ' beats ' + moveNames[pm] + '! You take ' + dmg + ' dmg!';
     d.resolveColor = '#ff4444';
+    d.lastRoundWin = false;
   }
   d.playerHP = Math.max(0, d.playerHP);
   d.monsterHP = Math.max(0, d.monsterHP);
@@ -1278,236 +1646,452 @@ function resolveRPS() {
 
 function drawDragon() {
   const d = D;
-  const moveEmoji = ['⚔️', '🛡️', '✨'];
-  const moveNames = ['ATTACK', 'DEFEND', 'MAGIC'];
-  const moveColors = ['#e74c3c', '#3498db', '#9b59b6'];
+  const moveEmoji = ['⚔️', '🛡️', '✨', '🧪'];
+  const moveNames = ['ATTACK', 'DEFEND', 'MAGIC', 'POTION'];
+  const moveColors = ['#e74c3c', '#3498db', '#9b59b6', '#6bcb77'];
 
-  // Monster area (top half)
+  // Monster area (top)
   ctx.fillStyle = 'rgba(255,255,255,0.03)';
-  ctx.fillRect(0, 0, W, H * 0.4);
+  ctx.fillRect(0, 0, W, H * 0.35);
 
-  // Monster
+  // Monster emoji
   ctx.font = '60px serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(d.monsterEmoji, W / 2, H * 0.18);
+  ctx.fillText(d.monsterEmoji, W / 2, H * 0.14);
 
   // Monster name & HP bar
-  drawText(d.monsterName, W / 2, H * 0.32, 16, '#fff');
+  drawText(d.monsterName, W / 2, H * 0.26, 16, '#fff');
   const mBarW = W * 0.5;
   const mBarX = (W - mBarW) / 2;
   ctx.fillStyle = 'rgba(255,255,255,0.1)';
-  ctx.fillRect(mBarX, H * 0.36, mBarW, 8);
+  ctx.fillRect(mBarX, H * 0.29, mBarW, 8);
   ctx.fillStyle = d.monsterHP > d.monsterMaxHP * 0.3 ? '#e74c3c' : '#ff6b6b';
-  ctx.fillRect(mBarX, H * 0.36, mBarW * Math.max(0, d.monsterHP / d.monsterMaxHP), 8);
-  drawText(d.monsterHP + '/' + d.monsterMaxHP, W / 2, H * 0.39 + 12, 11, 'rgba(255,255,255,0.5)');
+  ctx.fillRect(mBarX, H * 0.29, mBarW * Math.max(0, d.monsterHP / d.monsterMaxHP), 8);
+  drawText(d.monsterHP + '/' + d.monsterMaxHP, W / 2, H * 0.29 + 14, 11, 'rgba(255,255,255,0.5)');
+
+  // Monster tell text
+  if (d.phase === 'select') {
+    ctx.font = '600 10px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,159,67,0.7)';
+    ctx.fillText(d.monsterTellText, W / 2, H * 0.34);
+  }
 
   // Monster move indicator (during resolve)
   if (d.phase === 'resolve' && d.monsterMove >= 0) {
-    drawText(moveEmoji[d.monsterMove], W / 2 + 60, H * 0.18, 30, '#fff');
+    drawText(moveEmoji[d.monsterMove], W / 2 + 60, H * 0.14, 30, '#fff');
   }
 
-  // Action zones (bottom half)
-  for (let i = 0; i < 3; i++) {
-    const zy = H * 0.5 + i * (H * 0.16);
-    const zh = H * 0.14;
+  // Action zones (4 zones now)
+  const zoneCount = 4;
+  const zoneStartY = H * 0.38;
+  const zoneH = (H * 0.48) / zoneCount;
+
+  for (let i = 0; i < zoneCount; i++) {
+    const zy = zoneStartY + i * zoneH;
     const active = d.selectZone === i && d.phase === 'select';
 
-    ctx.fillStyle = active ? moveColors[i] + '30' : 'rgba(255,255,255,0.03)';
-    ctx.fillRect(10, zy, W - 20, zh);
+    // Special handling for potion zone
+    const isPotionZone = i === 3;
+    const potionAvailable = d.potions > 0;
+    const manaAvailable = i !== 2 || d.mana >= 10;
 
-    if (active) {
+    ctx.fillStyle = active ? moveColors[i] + '30' : 'rgba(255,255,255,0.03)';
+    if (isPotionZone && !potionAvailable) ctx.fillStyle = 'rgba(255,255,255,0.01)';
+    ctx.fillRect(10, zy, W - 20, zoneH - 4);
+
+    if (active && (manaAvailable || isPotionZone)) {
       ctx.strokeStyle = moveColors[i];
       ctx.lineWidth = 2;
-      ctx.strokeRect(10, zy, W - 20, zh);
+      ctx.strokeRect(10, zy, W - 20, zoneH - 4);
 
-      // Lock progress bar
-      ctx.fillStyle = moveColors[i] + '60';
-      ctx.fillRect(10, zy + zh - 4, (W - 20) * d.lockProgress, 4);
+      // Lock progress bar (or potion hold bar)
+      if (isPotionZone && potionAvailable) {
+        ctx.fillStyle = moveColors[i] + '60';
+        ctx.fillRect(10, zy + zoneH - 8, (W - 20) * (d.potionHoldTime / d.potionHoldNeeded), 4);
+      } else if (!isPotionZone) {
+        ctx.fillStyle = moveColors[i] + '60';
+        ctx.fillRect(10, zy + zoneH - 8, (W - 20) * d.lockProgress, 4);
+      }
     }
 
-    ctx.font = '28px serif';
+    ctx.font = '24px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(moveEmoji[i], 50, zy + zh / 2);
+    ctx.fillText(moveEmoji[i], 45, zy + (zoneH - 4) / 2);
 
-    ctx.font = '600 14px Fredoka, sans-serif';
+    ctx.font = '600 13px Fredoka, sans-serif';
     ctx.fillStyle = active ? '#fff' : 'rgba(255,255,255,0.4)';
+    if (isPotionZone && !potionAvailable) ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    if (i === 2 && d.mana < 10) ctx.fillStyle = 'rgba(255,100,100,0.4)';
     ctx.textAlign = 'left';
-    ctx.fillText(moveNames[i], 80, zy + zh / 2);
+    let label = moveNames[i];
+    if (i === 2) label += ' (10💧)';
+    if (i === 3) label += ' ×' + d.potions + (potionAvailable ? ' (hold)' : ' empty');
+    ctx.fillText(label, 70, zy + (zoneH - 4) / 2);
   }
 
+  // Mana bar
+  const manaBarW = W * 0.4;
+  const manaBarX = W - manaBarW - 15;
+  const manaBarY = H - 50;
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(manaBarX, manaBarY, manaBarW, 6);
+  ctx.fillStyle = '#6c5ce7';
+  ctx.fillRect(manaBarX, manaBarY, manaBarW * (d.mana / d.maxMana), 6);
+  ctx.font = '600 10px Fredoka, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#a29bfe';
+  ctx.fillText('💧 ' + d.mana + '/' + d.maxMana, W - 15, manaBarY - 5);
+
   // Player HP bar at bottom
-  const pBarW = W * 0.6;
-  const pBarX = (W - pBarW) / 2;
-  const pBarY = H - 35;
+  const pBarW = W * 0.5;
+  const pBarX = 15;
+  const pBarY = H - 30;
   ctx.fillStyle = 'rgba(255,255,255,0.1)';
   ctx.fillRect(pBarX, pBarY, pBarW, 8);
   ctx.fillStyle = d.playerHP > d.playerMaxHP * 0.3 ? '#6bcb77' : '#ff6b6b';
   ctx.fillRect(pBarX, pBarY, pBarW * Math.max(0, d.playerHP / d.playerMaxHP), 8);
-  drawText('HP: ' + d.playerHP + '/' + d.playerMaxHP, W / 2, pBarY + 18, 11, 'rgba(255,255,255,0.5)');
+  drawText('HP: ' + d.playerHP + '/' + d.playerMaxHP, pBarX + pBarW / 2, pBarY + 18, 11, 'rgba(255,255,255,0.5)');
 
   // Resolve text
   if (d.phase === 'resolve' && d.resolveText) {
-    drawText(d.resolveText, W / 2, H * 0.46, 14, d.resolveColor);
+    // Wrap long text
+    ctx.font = '700 13px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = d.resolveColor;
+    ctx.fillText(d.resolveText, W / 2, H * 0.37);
   }
 
   // Win/dead text
   if (d.phase === 'win') {
-    drawText('🎉 ' + d.monsterName + ' defeated!', W / 2, H * 0.46, 18, '#6bcb77');
+    drawText('🎉 ' + d.monsterName + ' defeated!', W / 2, H * 0.37, 18, '#6bcb77');
   }
   if (d.phase === 'dead') {
-    drawText('💀 You have fallen...', W / 2, H * 0.46, 18, '#ff4444');
+    drawText('💀 You have fallen...', W / 2, H * 0.37, 18, '#ff4444');
+  }
+
+  // Move history indicator (small dots)
+  if (d.moveHistory.length > 0) {
+    ctx.font = '600 9px Fredoka, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillText('Moves: ' + d.moveHistory.map(m => moveEmoji[m]).join(' '), 15, H - 8);
   }
 }
 
 
 // ═══════════════════════════════════════════════
-//  GAME 6: SHADOW SNEAK 🕵️ (Stealth)
-//  Avoid searchlights, stay in shadows, collect intel
+//  GAME 6: SHADOW SNEAK 🕵️ (Vertical Infiltration)
+//  v2: Upward scroll, patterned lasers, cameras,
+//  hackable terminals, cloak power, instant death
 // ═══════════════════════════════════════════════
 let SH = {};
 
 function initShadow() {
   SH = {
-    y: H * 0.5,           // spy Y position
+    y: H * 0.5,
     scroll: 0,
-    detection: 0,         // 0-100
-    maxDetect: 100,
     score: 0,
     intel: 0,
-    lights: [],
-    shadows: [],
-    intelItems: [],
-    spawnT: 0,
-    intelT: 0,
+    alive: true,
+    // Lasers with patterns
+    lasers: [],
+    // Security cameras with cone vision
+    cameras: [],
+    // Hackable terminals
+    terminals: [],
+    terminalHold: 0,
+    terminalTarget: null,
+    // Cloak
+    cloakEnergy: 0,          // 0-100, charges in shadow
+    cloakActive: false,
+    cloakCost: 2,             // per second drain
     maxROM: 0,
     distance: 0,
-    speed: 80,
-    dur: 120
+    speed: 40,                // SLOW scroll — patience game
+    nextLaserDist: 100,
+    nextCameraDist: 250,
+    nextTerminalDist: 400,
+    deathFlash: 0,
+    dur: 120,
+    particles: [],
+    // Shadow zones (safe areas)
+    shadows: [],
+    nextShadowDist: 50
   };
-  // Init some lights and shadows
-  for (let i = 0; i < 5; i++) {
-    SH.lights.push(makeLight(W * 0.3 + i * rand(200, 350)));
-    SH.shadows.push(makeShadow(W * 0.2 + i * rand(150, 300)));
+
+  // Init some initial hazards
+  for (let i = 0; i < 4; i++) {
+    SH.lasers.push(makeLaser(H - 100 - i * rand(120, 200)));
+  }
+  for (let i = 0; i < 2; i++) {
+    SH.cameras.push(makeCamera(H - 200 - i * rand(250, 400)));
+  }
+  for (let i = 0; i < 6; i++) {
+    SH.shadows.push({
+      baseY: H - 50 - i * rand(80, 160),
+      x: rand(W * 0.1, W * 0.8),
+      w: rand(60, 120),
+      h: rand(50, 100)
+    });
   }
 }
 
-function makeLight(x) {
+function makeLaser(baseY) {
+  const patterns = ['sweep', 'sine', 'blink', 'rotate'];
+  const pattern = patterns[Math.floor(Math.random() * patterns.length)];
   return {
-    x: x,
-    y: rand(H * 0.2, H * 0.8),
+    baseY: baseY,
+    x: 0,
+    w: W,
+    thickness: 4,
+    pattern: pattern,
+    speed: rand(40, 120),
+    phase: rand(0, Math.PI * 2),
+    amplitude: rand(30, W * 0.35),
+    blinkOn: true,
+    blinkTimer: 0,
+    blinkInterval: rand(0.8, 2.0),
+    // For sweep pattern
+    sweepX: rand(0, W),
     sweepDir: Math.random() > 0.5 ? 1 : -1,
-    sweepSpeed: rand(60, 150),
-    width: rand(80, 160),
-    height: rand(100, 200)
+    gapSize: rand(60, 100),     // gap in the laser for the player to pass through
+    gapX: rand(W * 0.2, W * 0.8)
   };
 }
 
-function makeShadow(x) {
+function makeCamera(baseY) {
   return {
-    x: x,
-    y: rand(H * 0.15, H * 0.75),
-    w: rand(40, 100),
-    h: rand(60, 150)
+    baseY: baseY,
+    x: Math.random() > 0.5 ? 10 : W - 10,
+    facingRight: Math.random() > 0.5,
+    angle: 0,
+    rotateSpeed: rand(0.5, 1.5),
+    rotateRange: rand(0.6, 1.2),   // radians
+    coneLength: rand(100, 180),
+    coneAngle: 0.5,                // half-angle of cone in radians
+    phase: rand(0, Math.PI * 2)
   };
 }
 
 function updateShadow(dt) {
   const s = SH;
-  s.speed = 80 + gameTime * 0.5;
-  s.scroll += s.speed * dt;
-  s.distance += s.speed * dt;
+  if (!s.alive) {
+    s.deathFlash += dt;
+    if (s.deathFlash >= 2) {
+      showResults('🚨 Laser Contact — Eliminated!', [
+        { v: s.score, l: 'Score' }, { v: s.intel, l: '💻 Hacked' },
+        { v: Math.round(s.distance) + 'm', l: 'Climbed' }, { v: s.maxROM.toFixed(0) + '°', l: 'Max ROM' }
+      ]);
+    }
+    return;
+  }
 
-  // Spy Y follows ankle
+  s.speed = 40 + gameTime * 0.3;
+  const scrollAmt = s.speed * dt;
+  s.scroll += scrollAmt;
+  s.distance += scrollAmt;
+
+  // Spy Y follows ankle (up = higher on screen)
   const targetY = H * 0.1 + (0.5 - ankle * 0.5) * (H * 0.8);
   s.y = lerp(s.y, clamp(targetY, 30, H - 30), 5 * dt);
   s.maxROM = Math.max(s.maxROM, Math.abs(ankle) * 30);
 
-  // Move lights (they sweep up and down)
-  s.lights.forEach(li => {
-    li.x -= s.speed * dt;
-    li.y += li.sweepDir * li.sweepSpeed * dt;
-    if (li.y < H * 0.1 || li.y > H * 0.9) li.sweepDir *= -1;
-    li.y = clamp(li.y, H * 0.1, H * 0.9);
-  });
+  // Scroll everything down (screen moves up = world moves down)
+  s.lasers.forEach(l => l.baseY += scrollAmt);
+  s.cameras.forEach(c => c.baseY += scrollAmt);
+  s.terminals.forEach(t => t.baseY += scrollAmt);
+  s.shadows.forEach(sh => sh.baseY += scrollAmt);
 
-  // Move shadows
-  s.shadows.forEach(sh => sh.x -= s.speed * dt);
-
-  // Respawn lights and shadows that go offscreen
-  s.lights = s.lights.filter(li => li.x > -200);
-  while (s.lights.length < 5) {
-    const lastX = s.lights.length > 0 ? Math.max(...s.lights.map(l => l.x)) : W;
-    s.lights.push(makeLight(lastX + rand(200, 400)));
+  // Spawn new lasers
+  if (s.distance > s.nextLaserDist) {
+    s.lasers.push(makeLaser(-rand(20, 80)));
+    s.nextLaserDist = s.distance + rand(80, 160) - Math.min(gameTime * 0.5, 40);
   }
 
-  s.shadows = s.shadows.filter(sh => sh.x > -150);
-  while (s.shadows.length < 4) {
-    const lastX = s.shadows.length > 0 ? Math.max(...s.shadows.map(sh => sh.x)) : W;
-    s.shadows.push(makeShadow(lastX + rand(150, 350)));
+  // Spawn new cameras
+  if (s.distance > s.nextCameraDist) {
+    s.cameras.push(makeCamera(-rand(20, 60)));
+    s.nextCameraDist = s.distance + rand(200, 350) - Math.min(gameTime * 0.5, 60);
   }
 
-  // Spawn intel
-  s.intelT -= dt;
-  if (s.intelT <= 0) {
-    s.intelItems.push({ x: W + 20, y: rand(60, H - 60), got: false });
-    s.intelT = rand(3, 6);
+  // Spawn terminals
+  if (s.distance > s.nextTerminalDist) {
+    s.terminals.push({
+      baseY: -rand(20, 60),
+      x: rand(W * 0.15, W * 0.85),
+      hacked: false,
+      hackProgress: 0,
+      hackNeeded: 2.0
+    });
+    s.nextTerminalDist = s.distance + rand(300, 500);
   }
-  s.intelItems.forEach(it => it.x -= s.speed * dt);
 
-  // Collect intel
-  s.intelItems.forEach(it => {
-    if (!it.got && Math.abs(it.x - 55) < 25 && Math.abs(it.y - s.y) < 25) {
-      it.got = true;
-      s.intel++;
-      s.score += 50;
+  // Spawn shadows
+  if (s.distance > s.nextShadowDist) {
+    s.shadows.push({
+      baseY: -rand(10, 50),
+      x: rand(W * 0.1, W * 0.8),
+      w: rand(60, 120),
+      h: rand(40, 90)
+    });
+    s.nextShadowDist = s.distance + rand(60, 130);
+  }
+
+  // Cleanup offscreen items
+  s.lasers = s.lasers.filter(l => l.baseY < H + 100);
+  s.cameras = s.cameras.filter(c => c.baseY < H + 100);
+  s.terminals = s.terminals.filter(t => t.baseY < H + 100);
+  s.shadows = s.shadows.filter(sh => sh.baseY < H + 150);
+
+  // Update laser patterns
+  s.lasers.forEach(l => {
+    if (l.pattern === 'sweep') {
+      l.gapX += l.sweepDir * l.speed * dt;
+      if (l.gapX < 30 || l.gapX > W - 30) l.sweepDir *= -1;
+      l.gapX = clamp(l.gapX, 30, W - 30);
+    } else if (l.pattern === 'sine') {
+      l.gapX = W / 2 + Math.sin(gameTime * l.speed * 0.02 + l.phase) * l.amplitude;
+    } else if (l.pattern === 'blink') {
+      l.blinkTimer += dt;
+      if (l.blinkTimer >= l.blinkInterval) {
+        l.blinkOn = !l.blinkOn;
+        l.blinkTimer = 0;
+      }
+    } else if (l.pattern === 'rotate') {
+      l.gapX = W / 2 + Math.sin(gameTime * l.speed * 0.015 + l.phase) * l.amplitude;
+      // Also vary Y slightly
+      l.baseY += Math.cos(gameTime * 0.5 + l.phase) * 0.3;
     }
   });
-  s.intelItems = s.intelItems.filter(it => it.x > -30);
 
-  // Detection: are we in a light?
-  let inLight = false;
-  const spyX = 55;
-  s.lights.forEach(li => {
-    if (spyX > li.x - li.width / 2 && spyX < li.x + li.width / 2 &&
-        s.y > li.y - li.height / 2 && s.y < li.y + li.height / 2) {
-      inLight = true;
-    }
+  // Update cameras
+  s.cameras.forEach(c => {
+    c.angle = Math.sin(gameTime * c.rotateSpeed + c.phase) * c.rotateRange;
   });
 
-  // Check if in shadow (overrides light)
+  // Check if player is in shadow
   let inShadow = false;
+  const spyX = W * 0.5;  // spy is always horizontally centered
   s.shadows.forEach(sh => {
     if (spyX > sh.x - sh.w / 2 && spyX < sh.x + sh.w / 2 &&
-        s.y > sh.y - sh.h / 2 && s.y < sh.y + sh.h / 2) {
+        s.y > sh.baseY - sh.h / 2 && s.y < sh.baseY + sh.h / 2) {
       inShadow = true;
     }
   });
 
-  if (inLight && !inShadow) {
-    s.detection += 25 * dt;
-  } else {
-    s.detection -= 15 * dt;
-    if (!inLight) s.score += Math.round(dt * 5); // Score for staying hidden
+  // Cloak: charge in shadow, activate with toes-down hold
+  if (inShadow && !s.cloakActive) {
+    s.cloakEnergy = Math.min(100, s.cloakEnergy + 15 * dt);
   }
-  s.detection = clamp(s.detection, 0, s.maxDetect);
+
+  // Cloak activation: if energy > 30 and player double-taps bottom (we'll use a simple check)
+  // Actually, cloak auto-activates when touching laser if energy available
+  // Let's make it simpler: cloak drains while active, player can toggle by going to extreme bottom
+  if (ankle < -0.9 && s.cloakEnergy > 20 && !s.cloakActive) {
+    s.cloakActive = true;
+  }
+  if (s.cloakActive) {
+    s.cloakEnergy -= s.cloakCost * 20 * dt;
+    if (s.cloakEnergy <= 0) {
+      s.cloakEnergy = 0;
+      s.cloakActive = false;
+    }
+  }
+  // Deactivate cloak when leaving extreme bottom
+  if (s.cloakActive && ankle > -0.7) {
+    // Keep it on but it drains
+  }
+
+  // Terminal hacking
+  s.terminalTarget = null;
+  s.terminals.forEach(t => {
+    if (!t.hacked && Math.abs(spyX - t.x) < 40 && Math.abs(s.y - t.baseY) < 40) {
+      s.terminalTarget = t;
+    }
+  });
+  if (s.terminalTarget) {
+    s.terminalTarget.hackProgress += dt / s.terminalTarget.hackNeeded;
+    if (s.terminalTarget.hackProgress >= 1) {
+      s.terminalTarget.hacked = true;
+      s.intel++;
+      s.score += 75;
+      // Particles
+      for (let i = 0; i < 10; i++) {
+        s.particles.push({
+          x: s.terminalTarget.x + rand(-10, 10), y: s.terminalTarget.baseY + rand(-10, 10),
+          vx: rand(-60, 60), vy: rand(-60, 60),
+          life: 0.6, maxLife: 0.6, color: '#0abde3'
+        });
+      }
+    }
+  }
+
+  // COLLISION CHECK — lasers (instant death unless cloaked)
+  if (!s.cloakActive) {
+    s.lasers.forEach(l => {
+      if (l.pattern === 'blink' && !l.blinkOn) return; // blink off = safe
+      const ly = l.baseY;
+      // Check if player Y is at laser Y
+      if (Math.abs(s.y - ly) < l.thickness + 10) {
+        // Check if player is in the gap
+        const gapLeft = l.gapX - l.gapSize / 2;
+        const gapRight = l.gapX + l.gapSize / 2;
+        if (spyX < gapLeft || spyX > gapRight) {
+          // HIT!
+          s.alive = false;
+          s.deathFlash = 0;
+        }
+      }
+    });
+
+    // Camera detection (instant death)
+    s.cameras.forEach(c => {
+      const camDir = c.facingRight ? 0 : Math.PI;
+      const totalAngle = camDir + c.angle;
+      // Vector from camera to player
+      const dx = spyX - c.x;
+      const dy = s.y - c.baseY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < c.coneLength) {
+        const angleToPlayer = Math.atan2(dy, dx);
+        let angleDiff = angleToPlayer - totalAngle;
+        // Normalize
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        if (Math.abs(angleDiff) < c.coneAngle) {
+          // In shadow? Safe
+          if (!inShadow) {
+            s.alive = false;
+            s.deathFlash = 0;
+          }
+        }
+      }
+    });
+  }
+
+  // Score for surviving
+  s.score += Math.round(dt * 3);
+
+  // Particles
+  s.particles.forEach(p => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+  });
+  s.particles = s.particles.filter(p => p.life > 0);
 
   // HUD
-  const detPct = Math.round(s.detection);
-  setHud(s.score, detPct >= 70 ? '⚠️ DANGER!' : (inShadow ? '🌑 Hidden' : (inLight ? '⚡ EXPOSED!' : '👀 Sneaking')),
-    '📄 ' + s.intel, '', Math.round(s.distance) + 'm', fmtTime(s.dur - gameTime));
+  const cloakText = s.cloakActive ? '🔮 CLOAKED' : (inShadow ? '🌑 Hidden' : '👀 Exposed');
+  setHud(s.score, cloakText,
+    '💻 ' + s.intel, '', Math.round(s.distance) + 'm', fmtTime(s.dur - gameTime));
 
-  if (s.detection >= s.maxDetect) {
-    showResults('🚨 Detected!', [
-      { v: s.score, l: 'Score' }, { v: s.intel, l: '📄 Intel' },
-      { v: Math.round(s.distance) + 'm', l: 'Distance' }, { v: s.maxROM.toFixed(0) + '°', l: 'Max ROM' }
-    ]);
-  }
-  if (gameTime >= s.dur) {
-    showResults('🕵️ Mission Complete!', [
-      { v: s.score, l: 'Score' }, { v: s.intel, l: '📄 Intel' },
-      { v: Math.round(s.distance) + 'm', l: 'Distance' }, { v: s.maxROM.toFixed(0) + '°', l: 'Max ROM' }
+  if (gameTime >= s.dur && s.alive) {
+    showResults('🕵️ Infiltration Complete!', [
+      { v: s.score, l: 'Score' }, { v: s.intel, l: '💻 Hacked' },
+      { v: Math.round(s.distance) + 'm', l: 'Climbed' }, { v: s.maxROM.toFixed(0) + '°', l: 'Max ROM' }
     ]);
   }
 }
@@ -1515,89 +2099,207 @@ function updateShadow(dt) {
 function drawShadow() {
   const s = SH;
 
-  // Floor/ceiling
-  ctx.fillStyle = 'rgba(255,255,255,0.03)';
-  ctx.fillRect(0, 0, W, 20);
-  ctx.fillRect(0, H - 20, W, 20);
+  // Building/facility background — vertical lines for structure
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  // Horizontal floor lines (scroll with world)
+  const floorSpacing = 80;
+  const scrollOffset = s.scroll % floorSpacing;
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  for (let y = -floorSpacing + scrollOffset; y < H + floorSpacing; y += floorSpacing) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
 
-  // Shadows (safe zones) — dark areas
+  // Shadow zones (safe areas)
   s.shadows.forEach(sh => {
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(sh.x - sh.w / 2, sh.y - sh.h / 2, sh.w, sh.h);
-    // Shadow border
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(sh.x - sh.w / 2, sh.baseY - sh.h / 2, sh.w, sh.h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(sh.x - sh.w / 2, sh.y - sh.h / 2, sh.w, sh.h);
-    // Label
-    ctx.font = '600 9px Fredoka, sans-serif';
+    ctx.strokeRect(sh.x - sh.w / 2, sh.baseY - sh.h / 2, sh.w, sh.h);
+    ctx.font = '600 8px Fredoka, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.fillText('SHADOW', sh.x, sh.y - sh.h / 2 + 12);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillText('SHADOW', sh.x, sh.baseY - sh.h / 2 + 10);
   });
 
-  // Searchlights
-  s.lights.forEach(li => {
-    // Light cone
-    const grad = ctx.createRadialGradient(li.x, li.y, 0, li.x, li.y, Math.max(li.width, li.height) * 0.6);
-    grad.addColorStop(0, 'rgba(255,255,150,0.2)');
-    grad.addColorStop(0.7, 'rgba(255,255,100,0.08)');
-    grad.addColorStop(1, 'rgba(255,255,100,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(li.x - li.width / 2, li.y - li.height / 2, li.width, li.height);
+  // Lasers
+  s.lasers.forEach(l => {
+    if (l.pattern === 'blink' && !l.blinkOn) {
+      // Draw dimmed laser to show it exists
+      ctx.strokeStyle = 'rgba(255,50,50,0.08)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 8]);
+      ctx.beginPath(); ctx.moveTo(0, l.baseY); ctx.lineTo(W, l.baseY); ctx.stroke();
+      ctx.setLineDash([]);
+      return;
+    }
 
-    // Light border
+    const ly = l.baseY;
+    const gapL = l.gapX - l.gapSize / 2;
+    const gapR = l.gapX + l.gapSize / 2;
+
+    // Laser beam (left of gap)
+    if (gapL > 0) {
+      ctx.fillStyle = 'rgba(255,30,30,0.7)';
+      ctx.fillRect(0, ly - l.thickness / 2, gapL, l.thickness);
+      // Glow
+      const grad1 = ctx.createLinearGradient(0, ly - 15, 0, ly + 15);
+      grad1.addColorStop(0, 'rgba(255,0,0,0)');
+      grad1.addColorStop(0.5, 'rgba(255,0,0,0.15)');
+      grad1.addColorStop(1, 'rgba(255,0,0,0)');
+      ctx.fillStyle = grad1;
+      ctx.fillRect(0, ly - 15, gapL, 30);
+    }
+
+    // Laser beam (right of gap)
+    if (gapR < W) {
+      ctx.fillStyle = 'rgba(255,30,30,0.7)';
+      ctx.fillRect(gapR, ly - l.thickness / 2, W - gapR, l.thickness);
+      const grad2 = ctx.createLinearGradient(0, ly - 15, 0, ly + 15);
+      grad2.addColorStop(0, 'rgba(255,0,0,0)');
+      grad2.addColorStop(0.5, 'rgba(255,0,0,0.15)');
+      grad2.addColorStop(1, 'rgba(255,0,0,0)');
+      ctx.fillStyle = grad2;
+      ctx.fillRect(gapR, ly - 15, W - gapR, 30);
+    }
+
+    // Gap indicator (safe zone shimmer)
+    ctx.fillStyle = 'rgba(0,255,100,0.08)';
+    ctx.fillRect(gapL, ly - 12, l.gapSize, 24);
+  });
+
+  // Security cameras
+  s.cameras.forEach(c => {
+    const camDir = c.facingRight ? 0 : Math.PI;
+    const totalAngle = camDir + c.angle;
+
+    // Camera body
+    ctx.fillStyle = '#555';
+    ctx.beginPath();
+    ctx.arc(c.x, c.baseY, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // Lens
+    ctx.fillStyle = '#ff4444';
+    ctx.beginPath();
+    ctx.arc(c.x + Math.cos(totalAngle) * 6, c.baseY + Math.sin(totalAngle) * 6, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Vision cone
+    const coneStart = totalAngle - c.coneAngle;
+    const coneEnd = totalAngle + c.coneAngle;
+    ctx.fillStyle = 'rgba(255,255,100,0.08)';
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.baseY);
+    ctx.arc(c.x, c.baseY, c.coneLength, coneStart, coneEnd);
+    ctx.closePath();
+    ctx.fill();
+    // Cone edge
     ctx.strokeStyle = 'rgba(255,255,100,0.15)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(li.x - li.width / 2, li.y - li.height / 2, li.width, li.height);
-
-    // Light source dot
-    ctx.fillStyle = 'rgba(255,255,200,0.5)';
     ctx.beginPath();
-    ctx.arc(li.x, li.y - li.height / 2 - 5, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(c.x, c.baseY);
+    ctx.lineTo(c.x + Math.cos(coneStart) * c.coneLength, c.baseY + Math.sin(coneStart) * c.coneLength);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.baseY);
+    ctx.lineTo(c.x + Math.cos(coneEnd) * c.coneLength, c.baseY + Math.sin(coneEnd) * c.coneLength);
+    ctx.stroke();
   });
 
-  // Intel items
-  s.intelItems.forEach(it => {
-    if (it.got) return;
-    ctx.font = '22px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = '#0abde3';
-    ctx.shadowBlur = 10;
-    ctx.fillText('📄', it.x, it.y + Math.sin(gameTime * 3 + it.x * 0.01) * 5);
-    ctx.shadowBlur = 0;
+  // Terminals
+  s.terminals.forEach(t => {
+    if (t.hacked) {
+      ctx.font = '22px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = 0.3;
+      ctx.fillText('💻', t.x, t.baseY);
+      ctx.globalAlpha = 1;
+      ctx.font = '600 9px Fredoka, sans-serif';
+      ctx.fillStyle = '#0abde3';
+      ctx.fillText('HACKED ✓', t.x, t.baseY + 18);
+    } else {
+      ctx.font = '22px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = '#0abde3';
+      ctx.shadowBlur = 10;
+      ctx.fillText('💻', t.x, t.baseY + Math.sin(gameTime * 2) * 3);
+      ctx.shadowBlur = 0;
+      // Hack progress ring
+      if (t.hackProgress > 0) {
+        ctx.strokeStyle = '#0abde3';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(t.x, t.baseY, 18, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * t.hackProgress);
+        ctx.stroke();
+      }
+      // Label
+      ctx.font = '600 8px Fredoka, sans-serif';
+      ctx.fillStyle = 'rgba(10,189,227,0.6)';
+      ctx.fillText('TERMINAL', t.x, t.baseY + 20);
+    }
   });
 
   // Spy character
+  const spyX = W * 0.5;
   ctx.save();
-  ctx.translate(55, s.y);
+  ctx.translate(spyX, s.y);
+  if (s.cloakActive) {
+    // Cloak shimmer effect
+    ctx.globalAlpha = 0.3 + Math.sin(gameTime * 8) * 0.15;
+    ctx.shadowColor = '#0abde3';
+    ctx.shadowBlur = 20;
+  }
   ctx.font = '34px serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('🕵️', 0, 0);
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
   ctx.restore();
 
-  // Detection bar at top
-  const barW = W * 0.6;
-  const barX = (W - barW) / 2;
-  const barY = H - 18;
+  // Cloak energy bar
+  const cBarW = W * 0.5;
+  const cBarX = (W - cBarW) / 2;
+  const cBarY = H - 18;
   ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  ctx.fillRect(barX, barY, barW, 8);
-  const detPct = s.detection / s.maxDetect;
-  ctx.fillStyle = detPct > 0.7 ? '#ff4444' : (detPct > 0.4 ? '#ffd93d' : '#6bcb77');
-  ctx.fillRect(barX, barY, barW * detPct, 8);
+  ctx.fillRect(cBarX, cBarY, cBarW, 8);
+  const cPct = s.cloakEnergy / 100;
+  ctx.fillStyle = s.cloakActive ? '#0abde3' : (cPct > 0.3 ? '#6c5ce7' : 'rgba(108,92,231,0.4)');
+  ctx.fillRect(cBarX, cBarY, cBarW * cPct, 8);
   ctx.font = '600 10px Fredoka, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.fillText('DETECTION', W / 2, barY - 5);
+  ctx.fillText('CLOAK' + (s.cloakActive ? ' [ACTIVE]' : '') + ' ' + Math.round(s.cloakEnergy) + '%', W / 2, cBarY - 5);
 
-  // Edge danger flash
-  if (s.detection > 70) {
-    const pulse = Math.sin(gameTime * 6) * 0.5 + 0.5;
-    ctx.fillStyle = `rgba(255,0,0,${(s.detection - 70) / 100 * 0.3 * pulse})`;
+  // Particles
+  s.particles.forEach(p => {
+    ctx.globalAlpha = p.life / p.maxLife;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Death flash
+  if (!s.alive) {
+    const flash = Math.sin(s.deathFlash * 8) * 0.5 + 0.5;
+    ctx.fillStyle = `rgba(255,0,0,${flash * 0.4})`;
     ctx.fillRect(0, 0, W, H);
+    drawText('☠️ ELIMINATED', W / 2, H / 2, 24, '#ff4444');
   }
+
+  // Direction indicator
+  ctx.font = '600 10px Fredoka, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.fillText('↑ CLIMBING UP ↑', W / 2, 15);
 }
 
 
